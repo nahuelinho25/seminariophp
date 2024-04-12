@@ -50,10 +50,10 @@ $app->get('/',function(Request $request, Response $response, $args){
 //================================[ LOCALIDAD ]=========================================
 
 // Crear localidad
-/*
 $app->post('/localidades',function(Request $request, Response $response){
-    $data = $request->getParsedBody(); /// metodo para el reqeuest
-    if (!isset($data['nombre'])){   /// verificar si existe el dato id y nombre
+    $data = $request->getParsedBody();  ('Solo valido para POST)
+    /// verificar si existe el campo nombre
+    if (!isset($data['nombre'])){  
         $response->getBody()->write(json_encode(['error'=> 'El campo nombre es requerido']));
         return $response->withStatus(400);
     }else{
@@ -62,13 +62,13 @@ $app->post('/localidades',function(Request $request, Response $response){
             $nombre = $data['nombre'];
             // Posibles errores
 
-            // Nombre de la localidad supera los 50 caracteres
+            // Verificar si el nombre de la localidad supera los 50 caracteres
             if (strlen($nombre) > 50){
                 $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
                 return $response->withStatus(400);
             }
 
-            // Nombre de la localidad ya existe
+            // Verificar si el nombre de la localidad ya existe
             $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
@@ -87,15 +87,14 @@ $app->post('/localidades',function(Request $request, Response $response){
             }
         
         /// Si hay algun otro error
-        }
-        catch (PDOException $e){ 
+        }catch (PDOException $e){ 
 
         $response->getBody()->write(json_encode([
             'status' => "Bad Request",
             'message' => "Error al crear la localidad"]));
             return $response->withStatus(400);
         }
-    }
+}
 });
 
 // Editar Localidad
@@ -184,13 +183,13 @@ $app->get('/localidades', function(Request $request, Response $response){
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json');
 });
-**/
+
 //================================[ PROPIEDAD ]=========================================
 
 // Crear Propiedad
 
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
-    $data = $request->getParsedBody();
+    $data = $request->getParsedBody(); ('Solo valido para POST')
 
     /// Verificar si existe el campo
     if (!isset($data['nombre'])){
@@ -232,7 +231,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
         }
     }
 });
-/*
+
 // Listar Propiedad
 $app->get('/tipo_propiedades', function(Request $request, Response $response){
     $connection = getConnection();  // Me da la conexion a la base de datos
@@ -258,12 +257,12 @@ $app->get('/tipo_propiedades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-**/
+
 //================================[ INQUILINO ]=========================================
 
 // Crear Inquilino
 $app->post('/inquilinos', function(Request $request, Response $response){
-    $data = $request->getParsedBody();
+    $data = $request->getParsedBody(); ('Solo valido para POST')
 
     /// Verificar si existen todos los campos
     $campos_requeridos =['nombre_usuario', 'apellido', 'nombre', 'email', 'activo'];
@@ -357,6 +356,32 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     }
 });
 
+/// Listar Inquilinos
+$app->get('/inquilinos', function(Request $request, Response $response){
+    $connection = getConnection();
+
+    try {
+        $query = $connection->query('SELECT * FROM inquilinos ORDER BY id');
+        $inquilinos = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        $payload = json_encode([
+            'status' => "success",
+            'code' => 200,
+            'data' => $inquilinos
+        ]);
+        
+    } catch (PDOException $e){
+        $payload = json_encode ([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al listar las inquilinos ". $e->getMessage()
+        ]);
+    }
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
 // Ver Inquilino
 $app->get('/inquilinos/:id', function(Request $request, Response $response){
   // Me da la conexion a la base de datos
@@ -389,6 +414,6 @@ $app->get('/inquilinos/:id', function(Request $request, Response $response){
             'message' => "Error al mostrar ese inquilino ". $e->getMessage()
         ]);
     }
-});
+});    
 
 $app->run();
