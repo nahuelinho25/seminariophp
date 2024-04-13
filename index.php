@@ -49,11 +49,10 @@ $app->get('/',function(Request $request, Response $response, $args){
 
 //================================[ LOCALIDAD ]=========================================
 
-// Crear localidad
+// Crear localidades
 $app->post('/localidades',function(Request $request, Response $response){
-    $data = $request->getParsedBody();  ('Solo valido para POST)
-    /// verificar si existe el campo nombre
-    if (!isset($data['nombre'])){  
+    $data = $request->getParsedBody(); /// metodo para el reqeuest
+    if (!isset($data['nombre'])){   /// verificar si existe el dato id y nombre
         $response->getBody()->write(json_encode(['error'=> 'El campo nombre es requerido']));
         return $response->withStatus(400);
     }else{
@@ -62,13 +61,13 @@ $app->post('/localidades',function(Request $request, Response $response){
             $nombre = $data['nombre'];
             // Posibles errores
 
-            // Verificar si el nombre de la localidad supera los 50 caracteres
+            // Nombre de la localidad supera los 50 caracteres
             if (strlen($nombre) > 50){
                 $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
                 return $response->withStatus(400);
             }
 
-            // Verificar si el nombre de la localidad ya existe
+            // Nombre de la localidad ya existe
             $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
@@ -87,78 +86,117 @@ $app->post('/localidades',function(Request $request, Response $response){
             }
         
         /// Si hay algun otro error
-        }catch (PDOException $e){ 
+        }
+        catch (PDOException $e){ 
 
         $response->getBody()->write(json_encode([
             'status' => "Bad Request",
             'message' => "Error al crear la localidad"]));
             return $response->withStatus(400);
         }
-}
+    }
 });
 
-// Editar Localidad
-
+// Editar Localidades (finalizado 13/04)
 $app->put('/localidades/:id', function(Request $request, Response $response){
-    $id = //Como extraigo el id ?
-    $data = $request->getBody();
-    $nombre = $data['nombre'];
+    $data = $request->getParsedBody();
+    if (!isset($data['id'])){
+        $response->getBody()->write(json_encode(['error'=> 'El campo id es requerido']));
+        return $response->withStatus(400); 
+    }if (!isset($data['nombre'])){   /// verificar si existe el dato id y nombre
+        $response->getBody()->write(json_encode(['error'=> 'El campo nombre con el nuevo nombre es requerido']));
+         return $response->withStatus(400);
+    }else{
+        try{
+            $connection = getConnection();
+            $nombre = $data['nombre'];
+            $id = $data['id'];
+            // Posibles errores
 
-    $connection = getConnection();
+            // Nombre de la localidad supera los 50 caracteres
+            if (strlen($nombre) > 50){
+                $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
+                return $response->withStatus(400);
+            }
+                    
+            // Nombre de la localidad ya existe
+            $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
+            $consulta_repetido = $connection->query($sql);
+            if ($consulta_repetido->rowCount()> 0){ 
+                $fila = $consulta_repetido->fetch(); // Obtenemos la fila
+                if ($fila['id'] == $id) {
+                    $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede ser el que ya contiene']));
+                    return $response->withStatus(400);
+                }
+                else{
+                $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede repetirse']));
+                return $response->withStatus(400);}
 
-    try{
-        $query = $connection->prepare('UPDATE INTO SET "Como pongo el nombre " WHERE como asigno el id');
-        $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
-
-        $payload = json_encode([
-            'status' => "success",
-            'code' => 200,
-            'data' => $localidades,
-            'message' => "Localidad editada correctamente"
-        ]);
-    }catch(PDOException $e){
-        $payload = json_encode([
-            'status' => "Bad Request",
-            'code' => 400,
-            'message' => "Error al editar la localidad". $e->getMessage()
-        ]);
-    }
-
+            // Edita la localidad
+            }else{
+                $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
+                $consulto_id = $connection->query($sql);
+                /// Verificar si existe el campo y modificar
+                if ($consulto_id->rowCount()> 0){
+                     $sql = "UPDATE localidades SET nombre = :nombre WHERE id = :id";
+                     $consulta = $connection->prepare($sql);
+                     $consulta->bindValue(":nombre", $nombre);
+                     $consulta->bindValue(":id", $id);
+                     $consulta->execute();
+                     $response->getBody()->write(json_encode(['message' => 'La localidad con ese id se edito de forma exitosa']));
+                     return $response->withStatus(201);
+    
+                }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad con ese id no existe']));
+                        return $response->withStatus(400);
+                }
+            }   
+        }catch(PDOException $e){
+            $payload = json_encode([
+                 'status' => "Bad Request",
+                 'code' => 400,
+                 'message' => "Error al editar la localidad". $e->getMessage()
+            ]);
+        }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json');
-
-});
-
-// Eliminar Localidad
-
+}});
+ 
+// Eliminar Localidades (finalizado 13/04)
 $app->delete('/localidades/:id', function(Request $request, Response $response){
-    $id = //Como extraigo el id ?
-    $connection = getConnection();
-    
-    try{
-        $query = $connection->prepare('DELETE FROM localiades WHERE como asigno el id');
-        $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
-    
-        $payload = json_encode([
-            'status' => "success",
-            'code' => 200,
-            'data' => $localidades,
-            'message' => "Localidad eliminada correctamente"
-        ]);
-    }catch(PDOException $e){
-        $payload = json_encode([
-            'status' => "Bad Request",
-            'code' => 400,
-            'message' => "Error al eliminar la localidad". $e->getMessage()
-        ]);
+    $data = $request->getParsedBody();    
+    if (!isset($data['id'])){
+        $response->getBody()->write(json_encode(['error'=> 'El campo id es requerido']));
+        return $response->withStatus(400); 
+    }else{
+        try{
+            $connection = getConnection();
+            $id = $data['id'];
+            $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
+            $consulto_id = $connection->query($sql);
+            /// Verificar si existe el campo
+            if ($consulto_id->rowCount()> 0){
+                $sql = "DELETE FROM localidades WHERE id = '". $id ."' ";
+                $query = $connection->query($sql);
+                $localidades = $query->fetch(PDO::FETCH_ASSOC);
+                $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
+                return $response->withStatus(201);
+            }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
+                return $response->withStatus(400);
+            }  
+
+        }catch(PDOException $e){
+            $payload = json_encode([
+                'status' => "Bad Request",
+                'code' => 400,
+                'message' => "Error al eliminar la localidad". $e->getMessage()
+            ]);
+        }
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
     }
-    
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
 });
 
-// Listar Localidades
-
+// Listar Localidades 
 $app->get('/localidades', function(Request $request, Response $response){
     $connection = getConnection();
 
@@ -184,12 +222,11 @@ $app->get('/localidades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json');
 });
 
-//================================[ PROPIEDAD ]=========================================
+//================================[ TIPO PROPIEDAD ]=========================================
 
-// Crear Propiedad
-
-$app->post('/tipos_propiedad', function(Request $request, Response $response){
-    $data = $request->getParsedBody(); ('Solo valido para POST')
+// Crear Tipo Propiedad
+$app->post('/tipo_propiedades', function(Request $request, Response $response){
+    $data = $request->getParsedBody();
 
     /// Verificar si existe el campo
     if (!isset($data['nombre'])){
@@ -232,11 +269,11 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
     }
 });
 
-// Listar Propiedad
+//Listar Tipo Propiedad
 $app->get('/tipo_propiedades', function(Request $request, Response $response){
     $connection = getConnection();  // Me da la conexion a la base de datos
     try {
-        $query = $connection->query('SELECT * FROM tipos_propiedad');
+        $query = $connection->query('SELECT * FROM tipo_propiedades');
         $tipos = $query->fetchAll(PDO::FETCH_ASSOC);
 
         $payload = json_encode([
@@ -257,12 +294,70 @@ $app->get('/tipo_propiedades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json');
 });
 
+// Eliminar Tipo Propiedad (falta finalizar)
+$app->delete('/tipo_propiedades/:id', function(Request $request, Response $response){
+    $id = //Como extraigo el id ?
+    $connection = getConnection();
+    
+    try{
+        $query = $connection->prepare('DELETE FROM localiades WHERE como asigno el id');
+        $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
+    
+        $payload = json_encode([
+            'status' => "success",
+            'code' => 200,
+            'data' => $localidades,
+            'message' => "Localidad eliminada correctamente"
+        ]);
+    }catch(PDOException $e){
+        $payload = json_encode([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al eliminar la localidad". $e->getMessage()
+        ]);
+    }
+    
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+// Editar Tipo Propiedad (falta finalizar)
+$app->put('/tipo_propiedades/:id', function(Request $request, Response $response){
+    $id = //Como extraigo el id ?
+    $data = $request->getBody();
+    $nombre = $data['nombre'];
+
+    $connection = getConnection();
+
+    try{
+        $query = $connection->prepare('UPDATE INTO SET "Como pongo el nombre " WHERE como asigno el id');
+        $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        $payload = json_encode([
+            'status' => "success",
+            'code' => 200,
+            'data' => $localidades,
+            'message' => "Localidad editada correctamente"
+        ]);
+    }catch(PDOException $e){
+        $payload = json_encode([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al editar la localidad". $e->getMessage()
+        ]);
+    }
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+
+});
+
 
 //================================[ INQUILINO ]=========================================
 
 // Crear Inquilino
 $app->post('/inquilinos', function(Request $request, Response $response){
-    $data = $request->getParsedBody(); ('Solo valido para POST')
+    $data = $request->getParsedBody();
 
     /// Verificar si existen todos los campos
     $campos_requeridos =['nombre_usuario', 'apellido', 'nombre', 'email', 'activo'];
@@ -369,7 +464,7 @@ $app->get('/inquilinos', function(Request $request, Response $response){
             'code' => 200,
             'data' => $inquilinos
         ]);
-        
+
     } catch (PDOException $e){
         $payload = json_encode ([
             'status' => "Bad Request",
@@ -381,6 +476,7 @@ $app->get('/inquilinos', function(Request $request, Response $response){
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json');
 });
+
 
 // Ver Inquilino
 $app->get('/inquilinos/:id', function(Request $request, Response $response){
@@ -414,6 +510,6 @@ $app->get('/inquilinos/:id', function(Request $request, Response $response){
             'message' => "Error al mostrar ese inquilino ". $e->getMessage()
         ]);
     }
-});    
+});
 
 $app->run();
