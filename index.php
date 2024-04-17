@@ -112,19 +112,13 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
                 $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
                 return $response->withStatus(400);
             }
-                    
-            // Nombre de la localidad ya existe
-            $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
+            
+            // Nombre de la localidad ya existe (EXLUYENDO EN LA POSICION ID)
+            $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
-                $fila = $consulta_repetido->fetch(); // Obtenemos la fila
-                if ($fila['id'] == $id) {
-                    $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede ser el que ya contiene']));
-                    return $response->withStatus(400);
-                }
-                else{
-                $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede repetirse']));
-                return $response->withStatus(400);}
+                $response->getBody()->write(json_encode(['error'=> 'El nombre de la localidad ya esta asignado a otra id']));
+                return $response->withStatus(400);
 
             // Edita la localidad
             }else{
@@ -132,15 +126,14 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
                 $consulto_id = $connection->query($sql);
                 /// Verificar si existe el campo y modificar
                 if ($consulto_id->rowCount()> 0){
-                     $sql = "UPDATE localidades SET nombre = :nombre WHERE id = :id";
+                     $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
                      $consulta = $connection->prepare($sql);
                      $consulta->bindValue(":nombre", $nombre);
-                     $consulta->bindValue(":id", $id);
                      $consulta->execute();
-                     $response->getBody()->write(json_encode(['message' => 'La localidad con ese id se edito de forma exitosa']));
+                     $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
                      return $response->withStatus(201);
     
-                }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad con ese id no existe']));
+                }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad con el id: '. $id . ' no existe']));
                         return $response->withStatus(404);
                 }
             }   
@@ -152,7 +145,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             ]);
         }
     $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json');
+    return $response->withStatus(400);
 }});
 
 // Eliminar Localidad
@@ -283,18 +276,11 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             }
                     
             // Nombre de la localidad ya existe
-            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."'";
+            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
-                /// Obtenemos la fila
-                $fila = $consulta_repetido->fetch();
-                if ($fila['id'] == $id) {
-                    $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede ser el que ya contiene']));
-                    return $response->withStatus(400);
-                }
-                else{
-                $response->getBody()->write(json_encode(['error'=> 'El campo nombre no puede repetirse']));
-                return $response->withStatus(400);}
+                $response->getBody()->write(json_encode(['error'=> 'El nombre del tipo de localidad ya esta asignada a otra id']));
+                return $response->withStatus(400);
 
             // Edita el tipo de propiedad
             }else{
@@ -529,33 +515,19 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
         if ($consulto_id->rowCount()> 0){
            
             // Verificar si el nombre de usuario ya esta en uso (Excluyendo el ID )
-            $sql ="SELECT * FROM inquilinos WHERE nombre_usuario = '". $nombre_usuario ."'" ;
+            $sql ="SELECT * FROM inquilinos WHERE nombre_usuario = '". $nombre_usuario ."' AND id != '". $id ."'" ;
             $consulta_repetido_usuario = $connection->query($sql);
             if ($consulta_repetido_usuario->rowCount()> 0){ 
-                /// Obtenemos la fila
-                $fila = $consulta_repetido_usuario->fetch();
-                if ($fila['id'] == $id) {
-                    $response->getBody()->write(json_encode(['error'=> 'El nombre de usuario no puede ser el que ya contiene']));
-                    return $response->withStatus(400);
-                }
-                else{
-                $response->getBody()->write(json_encode(['error'=> 'El nombre de usuario no puede repetirse']));
-                return $response->withStatus(400);}
+                $response->getBody()->write(json_encode(['error'=> 'El nombre de usuario ya esta asignado a otra id']));
+                return $response->withStatus(400);
             }
 
             // Verificar si el correo electrónico ya esta en uso
-            $sql ="SELECT * FROM inquilinos WHERE email = '". $email ."'";
+            $sql ="SELECT * FROM inquilinos WHERE email = '". $email ."' AND id != '". $id ."'";
             $consulta_repetido_email = $connection->query($sql);
             if ($consulta_repetido_email->rowCount()> 0){ 
-                /// Obtenemos la fila
-                $fila = $consulta_repetido_email->fetch();
-                if ($fila['id'] == $id) {
-                    $response->getBody()->write(json_encode(['error'=> 'El email no puede ser el que ya contiene']));
-                    return $response->withStatus(400);
-                }
-                else{
-                $response->getBody()->write(json_encode(['error'=> 'El email de usuario no puede repetirse']));
-                return $response->withStatus(400);}
+                $response->getBody()->write(json_encode(['error'=> 'El email de usuario ya esta asignado a otra id']));
+                return $response->withStatus(400);
             }
             
             /// Editar Inquilino
@@ -680,12 +652,12 @@ $app->get('/inquilinos/$idInquilino/reservas', function(Request $request, Respon
 });
 
 // ================================[ PROPIEDADES ]=========================================
-/*
+
 /// Crear Propiedad
 $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
 
-    /// Verificar si existen todos los campos
+    /// Verificar si existen todos los campos requeridos
     $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
                         'disponible', 'valor_noche', 'moneda_id', 'tipo_propiedad_id'];
     foreach($campos_requeridos as $campo){
@@ -701,10 +673,61 @@ $app->post('/propiedades', function(Request $request, Response $response){
         return $response->withStatus(400);       
     }
 
-    $sql= "SELECT * FROM localidades WHERE  "
+    /// Variables para verificar si las IDs existen
+    $localidad_id = $data['localidad_id'];
+    $tipo_propiedad_id = $data['tipo_propiedad_id'];
 
+    try{
+        $connection = getConnection();
 
-});*/
+        /// Verificar si el ID de localidad existe en la tabla localidades
+        $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
+        $consulta_localidad = $connection()->query($sql);
+        if($consulta_localidad->rowCount() == 0){
+            $response->getBody()->write(json_encode(['error'=> 'El ID no existe en la tabla localidades']));
+            return $response->withStatus(400);
+        }
+
+        /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
+        $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$$tipo_propiedad_id."'";
+        $consulta_tipo_propiedades = $connection()->query($sql);
+        if($consulta_tipo_propiedades->rowCount() == 0){
+            $response->getBody()->write(json_encode(['error'=> 'El ID no existe en la tabla tipo_propiedades']));
+            return $response->withStatus(400);
+        }
+    
+        /// Agrego La Propiedad
+        $sql = "INSERT INTO propiedades (domicilio, localidad_id, cantidad_habitaciones, cantidad_banios, cochera, cantidad_huespedes,
+                fecha_inicio_disponibilidad, cantidad_días, disponible, valor_noche, moneda_id, tipo_propiedad_id, imagen, tipo_imagen) 
+                VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, 
+                :fecha_inicio_disponibilidad, :cantidad_días, :disponible, :valor_noche, :moneda_id, :tipo_propiedad_id, :imagen, :tipo_imagen)";
+        $consulta = $connection->prepare($sql);
+        $consulta->bindValue(":domicilio", $data['domicilio']);
+        $consulta->bindValue(":localidad_id", $data['localidad_id']);
+        $consulta->bindValue(":cantidad_habitaciones", $data['cantidad_habitaciones']?? null);
+        $consulta->bindValue(":cantidad_banios", $data['cantidad_banios']?? null);
+        $consulta->bindValue(":cochera", $data['cochera']?? null);
+        $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
+        $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
+        $consulta->bindValue(":cantidad_días", $data['cantidad_días']);
+        $consulta->bindValue(":disponible", $data['disponible']);
+        $consulta->bindValue(":valor_noche", $data['valor_noche']);
+        $consulta->bindValue(":moneda_id", $data['moneda_id']);
+        $consulta->bindValue(":tipo_propiedad_id", $data['tipo_propiedad_id']);
+        $consulta->bindValue(":imagen", $data['imagen']?? null);
+        $consulta->bindValue(":tipo_imagen", $data['tipo_imagen']?? null);
+        $consulta->execute();
+        /// En los campos que no son requeridos les asigno null para tener un valor que se pueda vincular a la consulta sql
+        $response->getBody()->write(json_encode(['Message'=> 'Propiedad Creada Correctamente']));
+        return $response->withStatus(200);
+
+    }catch (PDOException $e){ 
+        $response->getBody()->write(json_encode([
+            'status' => "Bad Request",
+            'message' => "Error al crear el inquilino". $e->getMessage()]));
+            return $response->withStatus(400);
+    }
+});
 
 // Editar Propiedad
 $app->put('/propiedades/$id', function(Request $request, Response $response){
