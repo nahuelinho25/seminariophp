@@ -44,7 +44,6 @@ function getConnection(){
 //================================[ LOCALIDAD ]=========================================
 
 // Crear localidad
-
 $app->post('/localidades',function(Request $request, Response $response){
     $data = $request->getParsedBody();
 
@@ -93,7 +92,6 @@ $app->post('/localidades',function(Request $request, Response $response){
 });
 
 // Editar Localidad
-
 $app->put('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
@@ -149,7 +147,6 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
 }});
 
 // Eliminar Localidad
-
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -179,7 +176,6 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
 });
 
 // Listar Localidades
-
 $app->get('/localidades', function(Request $request, Response $response){
     $connection = getConnection();
 
@@ -208,7 +204,6 @@ $app->get('/localidades', function(Request $request, Response $response){
 // ================================[ TIPO PROPIEDAD ]=========================================
 
 // Crear Tipo de Propiedad
-
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
     $data = $request->getParsedBody();
 
@@ -255,7 +250,6 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
 });
 
 // Editar Tipo de propiedad
-
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
@@ -876,6 +870,210 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
             'status' => "Bad Request",
             'code' => 400,
             'message' => "Error al mostrar la propiedad". $e->getMessage()
+        ]);
+    }
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+});
+
+// ================================[ RESERVAS ]=========================================
+
+/// Crear Reserva (falta hacer)
+$app->post('/reservas', function(Request $request, Response $response){
+    $data = $request->getParsedBody();
+
+    /// Verificar si existen todos los campos requeridos
+    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
+                        'disponible', 'valor_noche', 'moneda_id', 'tipo_propiedad_id'];
+    foreach($campos_requeridos as $campo){
+        if (!isset($data[$campo])){
+            $response->getBody()->write(json_encode(['error' => 'El campo '. $campo . ' es requerido']));
+            return $response->withStatus(400);
+        }
+    }
+
+    /// Verificar si el campo 'disponible' recibe 1(true) o 0 (false)
+    if($data['disponible'] !== '1' && $data['disponible']!== '0' ){
+        $response->getBody()->write(json_encode(['error' => 'El campo disponible debe ser 1 (true) o 0 (false)']));
+        return $response->withStatus(400);       
+    }
+
+    /// Variables para verificar si las IDs existen
+    $localidad_id = $data['localidad_id'];
+    $tipo_propiedad_id = $data['tipo_propiedad_id'];
+
+    try{
+        $connection = getConnection();
+
+        /// Verificar si el ID de localidad existe en la tabla localidades
+        $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
+        $consulta_localidad = $connection()->query($sql);
+        if($consulta_localidad->rowCount() == 0){
+            $response->getBody()->write(json_encode(['error'=> 'El ID no existe en la tabla localidades']));
+            return $response->withStatus(400);
+        }
+
+        /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
+        $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$$tipo_propiedad_id."'";
+        $consulta_tipo_propiedades = $connection()->query($sql);
+        if($consulta_tipo_propiedades->rowCount() == 0){
+            $response->getBody()->write(json_encode(['error'=> 'El ID no existe en la tabla tipo_propiedades']));
+            return $response->withStatus(400);
+        }
+    
+        /// Agrego La Propiedad
+        $sql = "INSERT INTO propiedades (domicilio, localidad_id, cantidad_habitaciones, cantidad_banios, cochera, cantidad_huespedes,
+                fecha_inicio_disponibilidad, cantidad_días, disponible, valor_noche, moneda_id, tipo_propiedad_id, imagen, tipo_imagen) 
+                VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, 
+                :fecha_inicio_disponibilidad, :cantidad_días, :disponible, :valor_noche, :moneda_id, :tipo_propiedad_id, :imagen, :tipo_imagen)";
+        $consulta = $connection->prepare($sql);
+        $consulta->bindValue(":domicilio", $data['domicilio']);
+        $consulta->bindValue(":localidad_id", $data['localidad_id']);
+        $consulta->bindValue(":cantidad_habitaciones", $data['cantidad_habitaciones']?? null);
+        $consulta->bindValue(":cantidad_banios", $data['cantidad_banios']?? null);
+        $consulta->bindValue(":cochera", $data['cochera']?? null);
+        $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
+        $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
+        $consulta->bindValue(":cantidad_días", $data['cantidad_días']);
+        $consulta->bindValue(":disponible", $data['disponible']);
+        $consulta->bindValue(":valor_noche", $data['valor_noche']);
+        $consulta->bindValue(":moneda_id", $data['moneda_id']);
+        $consulta->bindValue(":tipo_propiedad_id", $data['tipo_propiedad_id']);
+        $consulta->bindValue(":imagen", $data['imagen']?? null);
+        $consulta->bindValue(":tipo_imagen", $data['tipo_imagen']?? null);
+        $consulta->execute();
+        /// En los campos que no son requeridos les asigno null para tener un valor que se pueda vincular a la consulta sql
+        $response->getBody()->write(json_encode(['Message'=> 'Propiedad Creada Correctamente']));
+        return $response->withStatus(200);
+
+    }catch (PDOException $e){ 
+        $response->getBody()->write(json_encode([
+            'status' => "Bad Request",
+            'message' => "Error al crear el inquilino". $e->getMessage()]));
+            return $response->withStatus(400);
+    }
+});
+
+// Editar Reserva (falta hacer)
+$app->put('/reservas/{id}', function(Request $request, Response $response, $args){
+
+    $id = $args['id'];
+    $data = $request->getParsedBody();
+
+    /// Verificar si existen todos los campos
+    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
+    'disponible', 'valor_noche', 'tipo_propiedad_id'];
+    foreach($campos_requeridos as $campo){
+        if(!isset($data[$campo])){
+            $response->getBody()->write(json_encode(['error' => 'El campo '. $campo . ' es requerido']));
+            return $response->withStatus(400);
+        }
+    }
+
+    /// Verificar si el campo 'disponible' recibe 1(true) o 0 (false) (no es necesario esto)
+    if($data['disponible'] !== '1' && $data['disponible']!== '0' ){
+        $response->getBody()->write(json_encode(['error' => 'El campo disponible debe ser 1 (true) o 0 (false)']));
+        return $response->withStatus(400);       
+    }
+
+    try{
+        $connection = getConnection(); 
+        /// Obtener los datos
+        $domicilio = $data['domicilio'];
+        $localidad_id = $data['localidad_id'];
+        $cantidad_huespedes = $data['cantidad_huespedes'];
+        $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
+        $cantidad_dias = $data['cantidad_días']; 
+        $disponible = $data['disponible']; 
+        $valor_noche = $data['valor_noche']; 
+        $activo = $data['tipo_propiedad_id']; 
+
+
+        // Verificar si la propiedad existe
+        $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+        $consulto_id = $connection->query($sql);
+        if ($consulto_id->rowCount()> 0){   
+            /// Editar Propiedad
+            $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id, 
+                    cantidad_huespedes = :cantidad_huespedes, fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad,
+                    cantidad_días = :cantidad_días, disponible = :disponible, valor_noche = :valor_noche,
+                    tipo_propiedad_id = :tipo_propiedad_id  WHERE id = '". $id ."'";
+            $consulta = $connection->prepare($sql);
+            $consulta->bindValue(":domicilio", $domicilio);
+            $consulta->bindValue(":localidad_id", $localidad_id);
+            $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
+            $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
+            $consulta->bindValue(":cantidad_días", $cantidad_días);
+            $consulta->bindValue(":disponible", $disponible);
+            $consulta->bindValue(":valor_noche", $valor_noche);
+            $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
+            $consulta->execute();
+            $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
+            return $response->withStatus(201);
+            
+       }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad con el id: '. $id . ' no existe']));
+            return $response->withStatus(404);
+        } 
+    }catch(PDOException $e){
+        $payload = json_encode([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al editar la propiedad". $e->getMessage()
+        ]);
+    }
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
+});    
+
+/// Eliminar Reserva (falta hacer)
+$app->delete('/reservas/{id}', function(Request $request, Response $response){
+    $id = $args['id'];
+        try{
+            $connection = getConnection();
+            $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+            $consulto_id = $connection->query($sql);
+            /// Verificar si existe el id
+            if ($consulto_id->rowCount()> 0){
+                $sql = "DELETE FROM propiedades WHERE id = '". $id ."' ";
+                $query = $connection->query($sql);
+                $query->fetch(PDO::FETCH_ASSOC);
+                $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
+                return $response->withStatus(201);
+            }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad a eliminar no existe']));
+                return $response->withStatus(404);
+            }  
+
+        }catch(PDOException $e){
+            $payload = json_encode([
+                'status' => "Bad Request",
+                'code' => 400,
+                'message' => "Error al eliminar la propiedad". $e->getMessage()
+            ]);
+        }
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
+});
+
+/// Listar Reservas (falta hacer)
+$app->get('/reservas', function(Request $request, Response $response){
+    $connection = getConnection();
+
+    try {
+        $query = $connection->query('SELECT * FROM propiedades ORDER BY id');
+        $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
+
+        $payload = json_encode([
+            'status' => "success",
+            'code' => 200,
+            'data' => $propiedades
+        ]);
+        
+    } catch (PDOException $e){
+        $payload = json_encode ([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al listar las propiedades ". $e->getMessage()
         ]);
     }
 
