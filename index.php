@@ -728,7 +728,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
     $data = $request->getParsedBody();
 
     /// Verificar si existen todos los campos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
+    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
     'disponible', 'valor_noche', 'tipo_propiedad_id'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
@@ -750,10 +750,10 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
         $localidad_id = $data['localidad_id'];
         $cantidad_huespedes = $data['cantidad_huespedes'];
         $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
-        $cantidad_dias = $data['cantidad_días']; 
+        $cantidad_dias = $data['cantidad_dias']; 
         $disponible = $data['disponible']; 
         $valor_noche = $data['valor_noche']; 
-        $activo = $data['tipo_propiedad_id']; 
+        $tipo_propiedad_id = $data['tipo_propiedad_id']; 
 
 
         // Verificar si la propiedad existe
@@ -763,14 +763,14 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             /// Editar Propiedad
             $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id, 
                     cantidad_huespedes = :cantidad_huespedes, fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad,
-                    cantidad_días = :cantidad_días, disponible = :disponible, valor_noche = :valor_noche,
+                    cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
                     tipo_propiedad_id = :tipo_propiedad_id  WHERE id = '". $id ."'";
             $consulta = $connection->prepare($sql);
             $consulta->bindValue(":domicilio", $domicilio);
             $consulta->bindValue(":localidad_id", $localidad_id);
             $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
             $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
-            $consulta->bindValue(":cantidad_días", $cantidad_días);
+            $consulta->bindValue(":cantidad_dias", $cantidad_dias);
             $consulta->bindValue(":disponible", $disponible);
             $consulta->bindValue(":valor_noche", $valor_noche);
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
@@ -953,7 +953,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
     $data = $request->getParsedBody();
 
     /// Verificar si existen todos los campos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
+    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
     'disponible', 'valor_noche', 'tipo_propiedad_id'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
@@ -975,10 +975,10 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
         $localidad_id = $data['localidad_id'];
         $cantidad_huespedes = $data['cantidad_huespedes'];
         $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
-        $cantidad_dias = $data['cantidad_días']; 
+        $cantidad_dias = $data['cantidad_dias']; 
         $disponible = $data['disponible']; 
         $valor_noche = $data['valor_noche']; 
-        $activo = $data['tipo_propiedad_id']; 
+        $tipo_propiedad_id = $data['tipo_propiedad_id']; 
 
 
         // Verificar si la propiedad existe
@@ -988,14 +988,14 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             /// Editar Propiedad
             $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id, 
                     cantidad_huespedes = :cantidad_huespedes, fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad,
-                    cantidad_días = :cantidad_días, disponible = :disponible, valor_noche = :valor_noche,
+                    cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
                     tipo_propiedad_id = :tipo_propiedad_id  WHERE id = '". $id ."'";
             $consulta = $connection->prepare($sql);
             $consulta->bindValue(":domicilio", $domicilio);
             $consulta->bindValue(":localidad_id", $localidad_id);
             $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
             $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
-            $consulta->bindValue(":cantidad_días", $cantidad_días);
+            $consulta->bindValue(":cantidad_días", $cantidad_dias);
             $consulta->bindValue(":disponible", $disponible);
             $consulta->bindValue(":valor_noche", $valor_noche);
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
