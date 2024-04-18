@@ -647,7 +647,7 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     }
 });
 
-/// Historial de reservas de un inquilino
+/// Historial de reservas de un inquilino (falta completar)
 $app->get('/inquilinos/$idInquilino/reservas', function(Request $request, Response $response){
 });
 
@@ -801,7 +801,32 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
 });    
 
 /// Eliminar Propiedad
-$app->delete('/propiedades/$id', function(Request $request, Response $response){
+$app->delete('/propiedades/{id}', function(Request $request, Response $response){
+    $id = $args['id'];
+        try{
+            $connection = getConnection();
+            $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+            $consulto_id = $connection->query($sql);
+            /// Verificar si existe el id
+            if ($consulto_id->rowCount()> 0){
+                $sql = "DELETE FROM propiedades WHERE id = '". $id ."' ";
+                $query = $connection->query($sql);
+                $query->fetch(PDO::FETCH_ASSOC);
+                $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
+                return $response->withStatus(201);
+            }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad a eliminar no existe']));
+                return $response->withStatus(404);
+            }  
+
+        }catch(PDOException $e){
+            $payload = json_encode([
+                'status' => "Bad Request",
+                'code' => 400,
+                'message' => "Error al eliminar la propiedad". $e->getMessage()
+            ]);
+        }
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json');
 });
 
 /// Listar Propiedades
@@ -831,7 +856,31 @@ $app->get('/propiedades', function(Request $request, Response $response){
 });
 
 /// Ver Propiedad
-$app->get('/propiedades/$id', function(Request $request, Response $response){
+$app->get('/propiedades/{id}', function(Request $request, Response $response, $args){
+    $connection = getConnection();
+    $id = $args['id'];
+    try {
+        $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+        $consulto_id = $connection->query($sql);
+        /// Verificar si existe el campo
+        if ($consulto_id->rowCount()> 0){
+            $propiedadx = $consulto_id->fetch(PDO::FETCH_ASSOC);
+            $response->getBody()->write(json_encode([$propiedadx]));
+            return $response->withStatus(201);
+
+        }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad no existe']));
+            return $response->withStatus(404);
+        }  
+    } catch (PDOException $e){
+        $payload = json_encode ([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al mostrar la propiedad". $e->getMessage()
+        ]);
+    }
+
+    $response->getBody()->write($payload);
+    return $response->withHeader('Content-Type', 'application/json');
 });
 
 $app->run();
