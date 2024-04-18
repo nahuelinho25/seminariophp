@@ -653,7 +653,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
 
     /// Verificar si existen todos los campos requeridos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_días', 
+    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
                         'disponible', 'valor_noche', 'tipo_propiedad_id'];
     foreach($campos_requeridos as $campo){
         if (!isset($data[$campo])){
@@ -702,7 +702,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
         $consulta->bindValue(":cochera", $data['cochera']?? null);
         $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
         $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
-        $consulta->bindValue(":cantidad_días", $data['cantidad_días']);
+        $consulta->bindValue(":cantidad_dias", $data['cantidad_dias']);
         $consulta->bindValue(":disponible", $data['disponible']);
         $consulta->bindValue(":valor_noche", $data['valor_noche']);
         $consulta->bindValue(":tipo_propiedad_id", $data['tipo_propiedad_id']);
@@ -917,7 +917,7 @@ $app->post('/reservas', function(Request $request, Response $response){
         /// Agrego La Reserva
         $sql = "INSERT INTO reservas (id, propiedad_id, inquilino_id, fecha_desde, cantidad_noches, valor_total) 
                 VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, 
-                :fecha_inicio_disponibilidad, :cant0idad_días, :disponible, :valor_noche, :moneda_id, :tipo_propiedad_id, :imagen, :tipo_imagen)";
+                :fecha_inicio_disponibilidad, :cantidad_dias, :disponible, :valor_noche, :moneda_id, :tipo_propiedad_id, :imagen, :tipo_imagen)";
         $consulta = $connection->prepare($sql);
         $consulta->bindValue(":domicilio", $data['domicilio']);
         $consulta->bindValue(":localidad_id", $data['localidad_id']);
@@ -926,7 +926,7 @@ $app->post('/reservas', function(Request $request, Response $response){
         $consulta->bindValue(":cochera", $data['cochera']?? null);
         $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
         $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
-        $consulta->bindValue(":cantidad_días", $data['cantidad_días']);
+        $consulta->bindValue(":cantidad_dias", $data['cantidad_dias']);
         $consulta->bindValue(":disponible", $data['disponible']);
         $consulta->bindValue(":valor_noche", $data['valor_noche']);
         $consulta->bindValue(":moneda_id", $data['moneda_id']);
@@ -995,7 +995,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta->bindValue(":localidad_id", $localidad_id);
             $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
             $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
-            $consulta->bindValue(":cantidad_días", $cantidad_dias);
+            $consulta->bindValue(":cantidad_dias", $cantidad_dias);
             $consulta->bindValue(":disponible", $disponible);
             $consulta->bindValue(":valor_noche", $valor_noche);
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
