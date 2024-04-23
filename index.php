@@ -97,51 +97,51 @@ $app->post('/localidades',function(Request $request, Response $response){
 $app->put('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
+    $errores = [];
     
     /// verificar si existe el campo nombre
     if (!isset($data['nombre'])){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre con el nuevo nombre es requerido']));
-         return $response->withStatus(400);
+        $errores['nombre'] = 'El campo nombre con el nuevo nombre es requerido';
     }
 
     // Nombre de la localidad supera los 50 caracteres
     if (strlen($data['nombre']) > 50){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
-        return $response->withStatus(400);
+        $errores['nombremax'] = 'El campo nombre excede los caracteres permitidos';
     }
 
-    // Falta arreglo errores
-
-        try{
-            $connection = getConnection();
-            $nombre = $data['nombre'];
-            
-            /// AGREGAR VERIFICACION DE ID
-
-            // Nombre de la localidad ya existe (EXLUYENDO EN LA POSICION ID)
+    try{
+        $connection = getConnection();
+        $nombre = $data['nombre'];
+        // Edita la localidad
+        $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";  /// <----- VERIFICACION DE ID
+        $consulto_id = $connection->query($sql);
+            /// Verificar si existe el id y modificar
+        if ($consulto_id->rowCount()> 0){
+            // Nombre de la localidad ya existe verifico
             $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
-                $response->getBody()->write(json_encode(['error'=> 'El nombre de la localidad ya esta asignado a otra id']));
-                return $response->withStatus(400);
-
-            // Edita la localidad
-            }else{
-                $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";  /// <----- VERIFICACION DE ID
-                $consulto_id = $connection->query($sql);
-                /// Verificar si existe el id y modificar
-                if ($consulto_id->rowCount()> 0){
-                     $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
-                     $consulta = $connection->prepare($sql);
-                     $consulta->bindValue(":nombre", $nombre);
-                     $consulta->execute();
-                     $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
-                     return $response->withStatus(201);
-    
-                }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad con el id: '. $id . ' no existe']));
-                        return $response->withStatus(404);
-                }
-            }   
+                $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
+            }    
+            else {
+                $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
+                $consulta = $connection->prepare($sql);
+                $consulta->bindValue(":nombre", $nombre);
+                $consulta->execute();
+                $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
+                return $response->withStatus(201);
+            }
+        }else{ $errores['id']= 'La localidad con el id: '. $id . ' no existe';
+        }  
+        /// Mostrar todos los errores
+        if (!empty($errores)){
+            $error = "Errores: <br>";
+            foreach($errores as $value){
+                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+            }
+            $response->getBody()->write(json_encode([$error]));
+            return $response->withStatus(400);
+        }
         }catch(PDOException $e){
             $payload = json_encode([
                  'status' => "Bad Request",
@@ -210,7 +210,7 @@ $app->get('/localidades', function(Request $request, Response $response){
 
 // ================================[ TIPO PROPIEDAD ]=========================================
 
-// Crear Tipo de Propiedad
+// Crear Tipo de Propiedad (falta arreglo de errores)
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
     $data = $request->getParsedBody();
 
@@ -257,7 +257,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad
+// Editar Tipo de propiedad (falta arreglo de errores)
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
