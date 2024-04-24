@@ -257,7 +257,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad (falta arreglo de errores) (no me permite editar)
+// Editar Tipo de propiedad (falta arreglo de errores) 
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
@@ -289,14 +289,14 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
                 $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
                 $consulto_id = $connection->query($sql);
                 /// Verificar si existe el campo y modificar
-                if ($consulto_id->rowCount()> 0){
-                     $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";
+                if ($consulto_id->rowCount()> 0){                       
+                     $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";        
                      $consulta = $connection->prepare($sql);
                      $consulta->bindValue(":nombre", $nombre);
-                     $consulta->execute();
+                     $consulta->bindValue(":id", $id);
+                     $consulta->execute();                                                            
                      $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-                     return $response->withStatus(201);
-    
+                     return $response->withStatus(201);                   
                 }else{ $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad con el id: '. $id . ' no existe']));
                         return $response->withStatus(404);
                 }
@@ -370,7 +370,7 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
 
 // ================================[ INQUILINOS ]=========================================
 
-/// Crear Inquilino (no me permite crear)
+/// Crear Inquilino
 $app->post('/inquilinos', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
