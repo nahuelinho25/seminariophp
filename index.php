@@ -1076,7 +1076,7 @@ $app->post('/reservas', function(Request $request, Response $response){
     }
 });
 
-// Editar Reserva (falta consulta para eliminar)
+// Editar Reserva 
 $app->put('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $errores = [];
@@ -1117,7 +1117,15 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta_propiedad = $connection->query($sql);
             if($consulta_propiedad->rowCount() == 0){
                 $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
-            }            
+            } 
+
+            /// Verificar si fecha_desde es menor que la fecha actual
+            $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
+            $consulta_fecha = $connection->query($sql);
+            $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
+            if ($fecha_actual>=date("Y-m-d ")) {
+                $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
+            }           
 
             /// Mostrar todos los errores
             if (!empty($errores)){
@@ -1155,15 +1163,26 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });    
 
-/// Eliminar Reserva (falta consulta para eliminar)
+/// Eliminar Reserva 
 $app->delete('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
+    $data = $request->getParsedBody();
         try{
             $connection = getConnection();
             $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
             $reservas_id = $connection->query($sql);
             /// Verificar si existe el id
             if ($reservas_id->rowCount()> 0){
+                
+                /// Verificar si fecha_desde es menor que la fecha actual
+                $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
+                $consulta_fecha = $connection->query($sql);
+                $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
+                if ($fecha_actual>=date("Y-m-d ")) {
+                    $response->getBody()->write(json_encode(['error'=> 'No se puede eliminar la reserva porque ya comenzo']));
+                    return $response->withStatus(400);
+                }           
+
                 $sql = "DELETE FROM reservas WHERE id = '". $id ."' ";
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
