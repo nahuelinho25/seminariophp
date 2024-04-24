@@ -257,7 +257,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad (falta arreglo de errores)
+// Editar Tipo de propiedad (falta arreglo de errores) (no me permite editar)
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
@@ -278,7 +278,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             }
                     
             // Nombre de la localidad ya existe
-            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
+            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'"; 
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
                 $response->getBody()->write(json_encode(['error'=> 'El nombre del tipo de localidad ya esta asignada a otra id']));
@@ -370,7 +370,7 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
 
 // ================================[ INQUILINOS ]=========================================
 
-/// Crear Inquilino
+/// Crear Inquilino (no me permite crear)
 $app->post('/inquilinos', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -418,7 +418,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
 
         /// Variable para obtener el dato nombre_usario y email
         $sql = "SELECT * FROM inquilinos WHERE nombre_usuario = '". $nombre_usuario ."'";
-        $nombre_usuario_repetido = $connection->query($sql);
+        $nombre_usuario_repetido = $connection->query($sql); 
         $sql2 = "SELECT * FROM inquilinos WHERE email = '". $email ."'";
         $email_repetido = $connection->query($sql2);
 
@@ -659,7 +659,7 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Historial de reservas de un inquilino
+/// Historial de reservas de un inquilino (agregar error si el inquilino no existe)
 $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Response $response, $args){
     $idInquilino = $args['idInquilino'];
     try{
@@ -692,7 +692,7 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
 
 // ================================[ PROPIEDADES ]=========================================
 
-/// Crear Propiedad
+/// Crear Propiedad 
 $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -957,7 +957,7 @@ $app->get('/propiedades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Ver Propiedad
+/// Ver Propiedad (hacer mas estetico)
 $app->get('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try {
@@ -1076,15 +1076,14 @@ $app->post('/reservas', function(Request $request, Response $response){
     }
 });
 
-// Editar Reserva (falta hacer)
+// Editar Reserva (falta consulta para eliminar)
 $app->put('/reservas/{id}', function(Request $request, Response $response, $args){
-
     $id = $args['id'];
+    $errores = [];
     $data = $request->getParsedBody();
 
     /// Verificar si existen todos los campos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
-    'disponible', 'valor_noche', 'tipo_propiedad_id'];
+    $campos_requeridos =['propiedad_id', 'inquilino_id', 'fecha_desde', 'cantidad_noches'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
             $response->getBody()->write(json_encode(['error' => 'El campo '. $campo . ' es requerido']));
@@ -1092,62 +1091,71 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
         }
     }
 
-    /// Verificar si el campo 'disponible' recibe 1(true) o 0 (false) (no es necesario esto)
-    if($data['disponible'] !== '1' && $data['disponible']!== '0' ){
-        $response->getBody()->write(json_encode(['error' => 'El campo disponible debe ser 1 (true) o 0 (false)']));
-        return $response->withStatus(400);       
-    }
+
 
     try{
         $connection = getConnection(); 
         /// Obtener los datos
-        $domicilio = $data['domicilio'];
-        $localidad_id = $data['localidad_id'];
-        $cantidad_huespedes = $data['cantidad_huespedes'];
-        $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
-        $cantidad_dias = $data['cantidad_dias']; 
-        $disponible = $data['disponible']; 
-        $valor_noche = $data['valor_noche']; 
-        $tipo_propiedad_id = $data['tipo_propiedad_id']; 
-
-
-        // Verificar si la propiedad existe
-        $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+        $propiedad_id = $data['propiedad_id'];
+        $inquilino_id = $data['inquilino_id'];
+        $fecha_desde = $data['fecha_desde'];
+        $cantidad_noches = $data['cantidad_noches'];
+        // Verificar si la reserva existe
+        $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
-        if ($consulto_id->rowCount()> 0){   
-            /// Editar Propiedad
-            $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id, 
-                    cantidad_huespedes = :cantidad_huespedes, fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad,
-                    cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
-                    tipo_propiedad_id = :tipo_propiedad_id  WHERE id = '". $id ."'";
+        if ($consulto_id->rowCount()> 0){
+            
+            /// Verificar si el ID de inquilinos existe en la tabla de inquilinos
+            $sql = "SELECT * FROM inquilinos WHERE id = '".$inquilino_id."'";
+            $consulta_inquilino = $connection->query($sql);
+            if($consulta_inquilino->rowCount() == 0){
+                $errores['inquilino_existe'] = 'El ID '.$inquilino_id.' no existe en la tabla de inquilinos';
+            }
+
+            /// Verificar si el ID de propiedad existe en la tabla de propiedad
+            $sql = "SELECT * FROM propiedades WHERE id = '".$propiedad_id."'";
+            $consulta_propiedad = $connection->query($sql);
+            if($consulta_propiedad->rowCount() == 0){
+                $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
+            }            
+
+            /// Mostrar todos los errores
+            if (!empty($errores)){
+                $error = "Errores: <br>";
+                foreach($errores as $value){
+                    $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+                }
+                $response->getBody()->write(json_encode([$error]));
+                return $response->withStatus(400);
+            }
+
+            /// Edito la Reserva
+            $sql = "UPDATE reservas SET propiedad_id = :propiedad_id, inquilino_id = :inquilino_id, 
+                    fecha_desde = :fecha_desde, cantidad_noches = :cantidad_noches WHERE id = '". $id ."'";
             $consulta = $connection->prepare($sql);
-            $consulta->bindValue(":domicilio", $domicilio);
-            $consulta->bindValue(":localidad_id", $localidad_id);
-            $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
-            $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
-            $consulta->bindValue(":cantidad_dias", $cantidad_dias);
-            $consulta->bindValue(":disponible", $disponible);
-            $consulta->bindValue(":valor_noche", $valor_noche);
-            $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
+            $consulta->bindValue(":propiedad_id", $propiedad_id);
+            $consulta->bindValue(":inquilino_id", $inquilino_id);
+            $consulta->bindValue(":fecha_desde", $fecha_desde);
+            $consulta->bindValue(":cantidad_noches", $cantidad_noches);
             $consulta->execute();
-            $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
+            $response->getBody()->write(json_encode(['message' => 'La reserva con el id: '. $id . ' se edito de forma exitosa']));
             return $response->withStatus(201);
             
-       }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad con el id: '. $id . ' no existe']));
+       }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con el id: '. $id . ' no existe']));
             return $response->withStatus(404);
         } 
     }catch(PDOException $e){
         $payload = json_encode([
             'status' => "Bad Request",
             'code' => 400,
-            'message' => "Error al editar la propiedad". $e->getMessage()
+            'message' => "Error al editar la reserva". $e->getMessage()
         ]);
     }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });    
 
-/// Eliminar Reserva (falta hacer)
+/// Eliminar Reserva (falta consulta para eliminar)
 $app->delete('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
