@@ -659,25 +659,33 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Historial de reservas de un inquilino (agregar error si el inquilino no existe)
+/// Historial de reservas de un inquilino 
 $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Response $response, $args){
     $idInquilino = $args['idInquilino'];
     try{
         $connection = getConnection();
-        // Consulta para obtener las reservas del inquilino
-        $sql = "SELECT * FROM reservas INNER JOIN propiedades ON reservas.propiedad_id = propiedades.id
-        WHERE reservas.inquilino_id = '" .$idInquilino. "'";
-        $consulta_reservas = $connection->query($sql);
-        $reservas = $consulta_reservas->fetchAll(PDO::FETCH_ASSOC);
 
-        // Verificar si el inquilino tiene reservas
-        if (!$reservas){
-            $response->getBody()->write(json_encode(['message'=> 'El inquilino no tiene reservas']));
+        // Verificar si el inquilino existe
+        $sql = "SELECT * FROM inquilinos WHERE id = '". $idInquilino ."'";
+        $consulto_id = $connection->query($sql);
+        if ($consulto_id->rowCount()> 0){
+            // Consulta para obtener las reservas del inquilino
+            $sql = "SELECT * FROM reservas INNER JOIN propiedades ON reservas.propiedad_id = propiedades.id
+            WHERE reservas.inquilino_id = '" .$idInquilino. "'";
+            $consulta_reservas = $connection->query($sql);
+            $reservas = $consulta_reservas->fetchAll(PDO::FETCH_ASSOC);
+            // Verificar si el inquilino tiene reservas
+            if (!$reservas){
+                $response->getBody()->write(json_encode(['message'=> 'El inquilino no tiene reservas']));
+                return $response->withStatus(404);
+            }
+            $response->getBody()->write(json_encode($reservas));
+            return $response->withStatus(201);
+        }
+        else{
+            $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $idInquilino . ' no existe']));
             return $response->withStatus(404);
         }
-
-        $response->getBody()->write(json_encode($reservas));
-        return $response->withStatus(201);
 
     }catch (PDOException $e){
         $payload = json_encode ([
