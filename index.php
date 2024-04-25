@@ -43,37 +43,46 @@ function getConnection(){
 
 //================================[ LOCALIDAD ]=========================================
 
-// Crear localidad
+// Crear localidad(PROBADO)
 $app->post('/localidades',function(Request $request, Response $response){
     $data = $request->getParsedBody();
-
-    /// verificar si existe el campo nombre
-    if (!isset($data['nombre'])){  
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre es requerido']));
-        return $response->withStatus(400);
-    }
-
-     // Verificar si el nombre de la localidad supera los 50 caracteres
-    if (strlen($data['nombre']) > 50){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
-        return $response->withStatus(400);
-    }
-
-    /// Falta arreglo
-
+    $errores = [];
     try{
         $connection = getConnection();
-        $nombre = $data['nombre'];
 
-        // Verificar si el nombre de la localidad ya existe
-        $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
-        $consulta_repetido = $connection->query($sql);
-        if ($consulta_repetido->rowCount()> 0){ 
-            $response->getBody()->write(json_encode(['error'=> 'El  nombre no puede repetirse']));
+        /// verificar si existe el campo nombre
+        if (!isset($data['nombre'])){
+            $errores['nombre'] = 'El campo nombre es requerido';
+        }
+        else{
+            $nombre = $data['nombre'];
+            // Verificar si el nombre de la localidad supera los 50 caracteres
+            if (isset($data['nombre']) && strlen($data['nombre']) > 50){
+                $errores[] = 'El campo nombre excede los caracteres permitidos';
+            }
+            else{
+                // Verificar si el nombre de la localidad ya existe
+                $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
+                $consulta_repetido = $connection->query($sql);
+                if ($consulta_repetido->rowCount()> 0){ 
+                    $response->getBody()->write(json_encode(['error'=> 'El  nombre no puede repetirse']));
+                    return $response->withStatus(400);
+                }
+            }    
+        } 
+
+        /// Mostrar todos los errores
+        if (!empty($errores)){
+            $error = "Errores: <br>";
+            foreach($errores as $value){
+                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+            }
+            $response->getBody()->write(json_encode([$error]));
             return $response->withStatus(400);
-                
+        }
+
         // Agrega la localidad
-        }else{
+        else{
             $sql="INSERT INTO localidades (nombre) VALUES (:nombre)";
             $consulta = $connection->prepare($sql);
             $consulta->bindValue("nombre", $nombre);
@@ -84,13 +93,13 @@ $app->post('/localidades',function(Request $request, Response $response){
         }
         
         /// Si hay algun otro error
-        }catch (PDOException $e){ 
+    }catch (PDOException $e){ 
 
-        $response->getBody()->write(json_encode([
-            'status' => "Bad Request",
-            'message' => "Error al crear la localidad"]));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-        }
+    $response->getBody()->write(json_encode([
+        'status' => "Bad Request",
+        'message' => "Error al crear la localidad"]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
 });
 
 // Editar Localidad
@@ -104,25 +113,26 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
         $errores['nombre'] = 'El campo nombre con el nuevo nombre es requerido';
     }
 
-    // Nombre de la localidad supera los 50 caracteres
-    if (strlen($data['nombre']) > 50){
-        $errores['nombremax'] = 'El campo nombre excede los caracteres permitidos';
+    // Verificar si el nombre de la localidad supera los 50 caracteres
+    if (isset($data['nombre']) && strlen($data['nombre']) > 50){
+        $errores[] = 'El campo nombre excede los caracteres permitidos';
     }
 
     try{
         $connection = getConnection();
         $nombre = $data['nombre'];
-        // Edita la localidad
-        $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";  /// <----- VERIFICACION DE ID
+
+        /// Verificar si existe el id
+        $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
-            /// Verificar si existe el id y modificar
         if ($consulto_id->rowCount()> 0){
             // Nombre de la localidad ya existe verifico
             $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
             if ($consulta_repetido->rowCount()> 0){ 
                 $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
-            }    
+            }
+            // Edita la localidad
             else {
                 $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
                 $consulta = $connection->prepare($sql);
@@ -131,7 +141,8 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
                 $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
                 return $response->withStatus(201);
             }
-        }else{ $errores['id']= 'La localidad con el id: '. $id . ' no existe';
+        }else{ 
+            $errores['id']= 'La localidad con el id: '. $id . ' no existe';
         }  
         /// Mostrar todos los errores
         if (!empty($errores)){
@@ -142,13 +153,13 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             $response->getBody()->write(json_encode([$error]));
             return $response->withStatus(400);
         }
-        }catch(PDOException $e){
-            $payload = json_encode([
-                 'status' => "Bad Request",
-                 'code' => 400,
-                 'message' => "Error al editar la localidad". $e->getMessage()
-            ]);
-        }
+    }catch(PDOException $e){
+        $payload = json_encode([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al editar la localidad". $e->getMessage()
+        ]);
+    }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
@@ -210,23 +221,28 @@ $app->get('/localidades', function(Request $request, Response $response){
 
 // ================================[ TIPO PROPIEDAD ]=========================================
 
-// Crear Tipo de Propiedad (tira warning si falta campo nombre)
+// Crear Tipo de Propiedad (PROBADO)
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
     $data = $request->getParsedBody();
         try{
             $connection = getConnection();
-            $nombre = $data['nombre'];
             $errores = [];
             /// Verificar si existe el campo
-            if (!isset($data['nombre'])) $errores['nombreno'] = 'El campo nombre es requerido';
+            if (!isset($data['nombre'])){
+                $errores['nombreno'] = 'El campo nombre es requerido';
+            }
             else{
+                $nombre = $data['nombre'];
                 // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
-                if (strlen($data['nombre']) > 50) $errores['nombreexede'] = 'El campo nombre excede los caracteres permitidos';
-                
-                /// Verificar si el nombre del tipo de propiedad ya existe
-                $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."'";
-                $consulta_repetido = $connection->query($sql);
-                if ($consulta_repetido->rowCount()> 0)  $errores['nombrerepe'] = 'El nombre no puede repetirse';
+                if(isset($data['nombre']) && strlen($data['nombre']) > 50){
+                    $errores['nombreexede'] = 'El campo nombre excede los caracteres permitidos';
+                }
+                else{
+                    /// Verificar si el nombre del tipo de propiedad ya existe
+                    $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."'";
+                    $consulta_repetido = $connection->query($sql);
+                    if ($consulta_repetido->rowCount()> 0)  $errores['nombrerepe'] = 'El nombre no puede repetirse';
+                }
             }
             /// Mostrar todos los errores
             if (!empty($errores)){
@@ -247,7 +263,6 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
                 $response->getBody()->write(json_encode(['message'=> 'tipo de propiedad creada']));
                 return $response->withStatus(201);
             }
-         
         
         }catch (PDOException $e){ 
 
@@ -258,62 +273,62 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad (tira warning si falta campo nombre)
+// Editar Tipo de propiedad (probar)
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
-        try{
-            $errores = [];
-            $connection = getConnection();
-            $nombre = $data['nombre'];
+    $errores = [];
 
-            /// verificar si existe el campo nombre
-            if (!isset($data['nombre'])) $errores['nombreno'] = 'El campo nombre es requerido';
+    /// Verificar si existe el campo nombre
+    if (!isset($data['nombre'])){
+        $errores[] = 'El campo nombre con el nuevo nombre es requerido';
+    }
 
-            else {
-            // Nombre del tipo de propiedad supera los 50 caracteres
-            if (strlen($nombre) > 50) $errores['nombreexe'] = 'El campo nombre excede los caracteres permitidos';
+    // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
+    if (isset($data['nombre']) && strlen($data['nombre']) > 50){
+        $errores[] = 'El campo nombre excede los caracteres permitidos';
+    }
 
-            // Nombre de la localidad ya existe
-            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'"; 
+    try{
+        $connection = getConnection();
+        $nombre = $data['nombre'];
+
+        // Verifico si existe le ID
+        $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
+        $consulto_id = $connection->query($sql);
+        if ($consulto_id->rowCount()> 0){
+            // Nombre de la localidad ya existe (Exluyendo el ID)
+            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0) $errores['nombredupli'] = 'El nombre del tipo de localidad ya esta asignada a otra id';
-            }
-
-            /// Verificar si existe alguna propiedad con ese id
-            $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
-            $consulto_id = $connection->query($sql);
-            if ($consulto_id->rowCount()<= 0) $errores['noexiste'] = 'El tipo de propiedad con el id: '. $id . ' no existe';
-                        
-
-            /// Mostrar todos los errores
-            if (!empty($errores)){
-                $error = "Errores: <br>";
-                foreach($errores as $value){
-                    $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-                }
-                $response->getBody()->write(json_encode([$error]));
-                return $response->withStatus(400);
-            }
-
-            // Edita el tipo de propiedad
-            else{           
-                $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";        
+            if ($consulta_repetido->rowCount()> 0){ 
+                $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
+            }else{
+            $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";
                 $consulta = $connection->prepare($sql);
                 $consulta->bindValue(":nombre", $nombre);
-                $consulta->bindValue(":id", $id);
-                $consulta->execute();                                                            
+                $consulta->execute();
                 $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-                return $response->withStatus(201);                   
-            }   
-
-        }catch(PDOException $e){
-            $payload = json_encode([
-                 'status' => "Bad Request",
-                 'code' => 400,
-                 'message' => "Error al editar el tipo de propiedad". $e->getMessage()
-            ]);
+                return $response->withStatus(201);
+            }
+        }else{ 
+                $errores['id']= 'El tipo de propiedad con el id: '. $id . ' no existe';
         }
+        /// Mostrar todos los errores
+        if (!empty($errores)){
+            $error = "Errores: <br>";
+            foreach($errores as $value){
+                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+            }
+            $response->getBody()->write(json_encode([$error]));
+            return $response->withStatus(400);
+        }
+    }catch(PDOException $e){
+    $payload = json_encode([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al editar el tipo de propiedad". $e->getMessage()
+        ]);
+    }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
@@ -382,7 +397,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     $errores = [];
 
     /// Verificar si existen todos los campos
-    $campos_requeridos =['nombre_usuario', 'apellido', 'nombre', 'email', 'activo'];
+    $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
         $errores[$campo] = 'El campo '. $campo . ' es requerido';
@@ -390,7 +405,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     }
 
     /// Verificar el limite de caracteres de todos los campos
-    $max_longitudes = ['nombre_usuario' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
+    $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
     foreach($max_longitudes as $campo => $max_longitud){
         if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
             $errores[$campo] = 'El campo '.$campo.' supera los caracteres permitidos';          
@@ -419,18 +434,18 @@ $app->post('/inquilinos', function(Request $request, Response $response){
 
     try{
         $connection = getConnection();
-        $nombre_usuario = $data['nombre_usuario'];  
+        $documento = $data['documento'];  
         $email = $data['email'];
 
-        /// Variable para obtener el dato nombre_usario y email
-        $sql = "SELECT * FROM inquilinos WHERE nombre_usuario = '". $nombre_usuario ."'";
-        $nombre_usuario_repetido = $connection->query($sql); 
+        /// Variable para obtener el dato documento y email
+        $sql = "SELECT * FROM inquilinos WHERE documento = '". $documento ."'";
+        $nombre_usuario_repetido = $connection->query($sql);
         $sql2 = "SELECT * FROM inquilinos WHERE email = '". $email ."'";
         $email_repetido = $connection->query($sql2);
 
         /// Verificar si el nombre de usuario ya existe o esta en uso
         if ($nombre_usuario_repetido->rowCount() > 0){
-            $errores['nombre_usuario'] = 'El nombre de usuario ya esta en uso';
+            $errores['documento'] = 'El documento ya esta en uso';
         }
 
         /// Verificar si el email ya esta en uso
@@ -449,10 +464,10 @@ $app->post('/inquilinos', function(Request $request, Response $response){
 
         }else{
             /// Agrego el inquilino
-            $sql = "INSERT INTO inquilinos (nombre_usuario, apellido, nombre, email, activo) 
-            VALUES (:nombre_usuario, :apellido, :nombre, :email, :activo)";
+            $sql = "INSERT INTO inquilinos (documento, apellido, nombre, email, activo) 
+            VALUES (:documento, :apellido, :nombre, :email, :activo)";
             $consulta = $connection->prepare($sql);
-            $consulta->bindValue("nombre_usuario", $data['nombre_usuario']);
+            $consulta->bindValue("documento", $data['documento']);
             $consulta->bindValue("apellido", $data['apellido']);
             $consulta->bindValue("nombre", $data['nombre']);
             $consulta->bindValue("email", $data['email']);
@@ -479,7 +494,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
     $errores = [];
 
     /// Verificar si existen todos los campos
-    $campos_requeridos =['nombre_usuario', 'apellido', 'nombre', 'email', 'activo'];
+    $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
         $errores[$campo] = 'El campo '. $campo . ' es requerido';
@@ -487,7 +502,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
     }
     
     /// Verificar el limite de caracteres de todos los campos
-    $max_longitudes = ['nombre_usuario' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
+    $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
     foreach($max_longitudes as $campo => $max_longitud){
         if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
             $errores[$campo] = 'El campo '.$campo.' supera los caracteres permitidos';          
@@ -517,7 +532,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
     try{
         $connection = getConnection(); 
         /// Obtener los datos
-        $nombre_usuario = $data['nombre_usuario'];
+        $documento = $data['documento'];
         $apellido = $data['apellido'];
         $nombre = $data['nombre'];
         $email = $data['email'];
@@ -529,14 +544,14 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
         if ($consulto_id->rowCount()> 0){
 
             // Verificar si el nombre de usuario y el email ya esta en uso (Excluyendo el ID )
-            $sql ="SELECT * FROM inquilinos WHERE nombre_usuario = '". $nombre_usuario ."' AND id != '". $id ."'" ;
+            $sql ="SELECT * FROM inquilinos WHERE documento = '". $documento ."' AND id != '". $id ."'" ;
             $consulta_repetido_usuario = $connection->query($sql);
             $sql2 ="SELECT * FROM inquilinos WHERE email = '". $email ."' AND id != '". $id ."'";
             $consulta_repetido_email = $connection->query($sql2);
 
             // Verificar si el nombre de usuario ya esta en uso (Excluyendo el ID )
             if ($consulta_repetido_usuario->rowCount()> 0){ 
-                $errores['usuario_repetido'] = 'El nombre de usuario ya esta asignado a otra id';   
+                $errores['documento_repetido'] = 'El documento ya esta asignado a otra id';   
 
             // Verificar si el correo electrónico ya esta en uso (Excluyendo el ID )
             }if ($consulta_repetido_email->rowCount()> 0){ 
@@ -554,10 +569,10 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             }
             
             /// Editar Inquilino
-            $sql = "UPDATE inquilinos SET nombre_usuario = :nombre_usuario, apellido = :apellido, 
+            $sql = "UPDATE inquilinos SET documento = :documento, apellido = :apellido, 
                     nombre = :nombre, email = :email, activo = :activo WHERE id = '". $id ."'";
             $consulta = $connection->prepare($sql);
-            $consulta->bindValue(":nombre_usuario", $nombre_usuario);
+            $consulta->bindValue(":documento", $documento);
             $consulta->bindValue(":apellido", $apellido);
             $consulta->bindValue(":nombre", $nombre);
             $consulta->bindValue(":email", $email);
@@ -665,7 +680,7 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Historial de reservas de un inquilino 
+/// Historial de reservas de un inquilino (probar ?)
 $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Response $response, $args){
     $idInquilino = $args['idInquilino'];
     try{
@@ -687,12 +702,10 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
             }
             $response->getBody()->write(json_encode($reservas));
             return $response->withStatus(201);
-        }
-        else{
+        }else{
             $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $idInquilino . ' no existe']));
             return $response->withStatus(404);
         }
-
     }catch (PDOException $e){
         $payload = json_encode ([
             'status' => "Bad Request",
@@ -706,7 +719,7 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
 
 // ================================[ PROPIEDADES ]=========================================
 
-/// Crear Propiedad 
+/// Crear Propiedad
 $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -723,6 +736,18 @@ $app->post('/propiedades', function(Request $request, Response $response){
     /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
     if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
         $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
+    }
+
+    // Verificar si la fecha tiene un formato correcto
+    if (isset($data['fecha_inicio_disponibilidad'])) {
+        $fecha = $data['fecha_inicio_disponibilidad'];
+        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+    
+        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+            // La fecha no tiene el formato correcto
+            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+        }
     }
 
     /// Mostrar todos los errores
@@ -824,6 +849,18 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
     /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
     if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
         $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
+    }
+
+    // Verificar si la fecha tiene un formato correcto
+    if (isset($data['fecha_inicio_disponibilidad'])) {
+        $fecha = $data['fecha_inicio_disponibilidad'];
+        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+    
+        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+            // La fecha no tiene el formato correcto
+            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+        }
     }
 
     /// Mostrar todos los errores
@@ -971,7 +1008,7 @@ $app->get('/propiedades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Ver Propiedad (hacer mas estetico)
+/// Ver Propiedad
 $app->get('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try {
@@ -1014,7 +1051,19 @@ $app->post('/reservas', function(Request $request, Response $response){
         }
     }
 
-    /// Mostrar todos los errores
+    // Verificar si la fecha tiene un formato correcto
+    if (isset($data['fecha_desde'])) {
+        $fecha = $data['fecha_desde'];
+        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+    
+        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+            // La fecha no tiene el formato correcto
+            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+        }
+    }
+
+    /// Mostrar todos los errores de los campos
     if (!empty($errores)){
         $error = "Errores: <br>";
         foreach($errores as $value){
@@ -1100,12 +1149,21 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
     $campos_requeridos =['propiedad_id', 'inquilino_id', 'fecha_desde', 'cantidad_noches'];
     foreach($campos_requeridos as $campo){
         if(!isset($data[$campo])){
-            $response->getBody()->write(json_encode(['error' => 'El campo '. $campo . ' es requerido']));
-            return $response->withStatus(400);
+        $errores[$campo] = 'El campo '. $campo . ' es requerido';
         }
     }
 
-
+    // Verificar si la fecha tiene un formato correcto
+    if (isset($data['fecha_desde'])) {
+        $fecha = $data['fecha_desde'];
+        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+    
+        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+            // La fecha no tiene el formato correcto
+            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+        }
+    }
 
     try{
         $connection = getConnection(); 
@@ -1134,10 +1192,8 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             } 
 
             /// Verificar si fecha_desde es menor que la fecha actual
-            $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
-            $consulta_fecha = $connection->query($sql);
-            $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
-            if ($fecha_actual>=date("Y-m-d ")) {
+            $fecha_actual=date("Y-m-d");
+            if ($fecha_actual >= $fecha_desde) {
                 $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
             }           
 
@@ -1175,12 +1231,11 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
     }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-});    
+});
 
 /// Eliminar Reserva 
 $app->delete('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
-    $data = $request->getParsedBody();
         try{
             $connection = getConnection();
             $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
