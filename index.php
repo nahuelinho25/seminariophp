@@ -102,48 +102,48 @@ $app->post('/localidades',function(Request $request, Response $response){
     }
 });
 
-// Editar Localidad
+// Editar Localidad(PROBADO)
 $app->put('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
     $errores = [];
-    
-    /// verificar si existe el campo nombre
-    if (!isset($data['nombre'])){
-        $errores['nombre'] = 'El campo nombre con el nuevo nombre es requerido';
-    }
-
-    // Verificar si el nombre de la localidad supera los 50 caracteres
-    if (isset($data['nombre']) && strlen($data['nombre']) > 50){
-        $errores[] = 'El campo nombre excede los caracteres permitidos';
-    }
-
     try{
         $connection = getConnection();
-        $nombre = $data['nombre'];
-
-        /// Verificar si existe el id
-        $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
-        $consulto_id = $connection->query($sql);
-        if ($consulto_id->rowCount()> 0){
-            // Nombre de la localidad ya existe verifico
-            $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
-            $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0){ 
-                $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
+        /// verificar si existe el campo nombre
+        if (!isset($data['nombre'])){
+            $errores['nombre'] = 'El campo nombre con el nuevo nombre es requerido';
+        }
+        else{
+            $nombre = $data['nombre'];
+            // Verificar si el nombre de la localidad supera los 50 caracteres
+            if (isset($data['nombre']) && strlen($data['nombre']) > 50){
+                $errores[] = 'El campo nombre excede los caracteres permitidos';
             }
-            // Edita la localidad
-            else {
-                $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
-                $consulta = $connection->prepare($sql);
-                $consulta->bindValue(":nombre", $nombre);
-                $consulta->execute();
-                $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
-                return $response->withStatus(201);
+            else{
+                /// Verificar si existe el id
+                $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
+                $consulto_id = $connection->query($sql);
+                if ($consulto_id->rowCount()> 0){
+                    // Nombre de la localidad ya existe verifico
+                    $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
+                    $consulta_repetido = $connection->query($sql);
+                    if ($consulta_repetido->rowCount()> 0){ 
+                        $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
+                    }
+                    // Edita la localidad
+                    else {
+                    $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
+                    $consulta = $connection->prepare($sql);
+                    $consulta->bindValue(":nombre", $nombre);
+                    $consulta->execute();
+                    $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
+                    return $response->withStatus(201);
+                    }
+                }else{ 
+                    $errores['id']= 'La localidad con el id: '. $id . ' no existe';
+                }  
             }
-        }else{ 
-            $errores['id']= 'La localidad con el id: '. $id . ' no existe';
-        }  
+        }
         /// Mostrar todos los errores
         if (!empty($errores)){
             $error = "Errores: <br>";
@@ -273,46 +273,36 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad (probar)
+// Editar Tipo de propiedad (PROBADO)
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
     $errores = [];
-
-    /// Verificar si existe el campo nombre
-    if (!isset($data['nombre'])){
-        $errores[] = 'El campo nombre con el nuevo nombre es requerido';
-    }
-
-    // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
-    if (isset($data['nombre']) && strlen($data['nombre']) > 50){
-        $errores[] = 'El campo nombre excede los caracteres permitidos';
-    }
-
     try{
         $connection = getConnection();
-        $nombre = $data['nombre'];
-
-        // Verifico si existe le ID
+        /// Verificar si existe el campo nombre
+        if (!isset($data['nombre'])){
+            $errores[] = 'El campo nombre con el nuevo nombre es requerido';
+        }
+        else{
+            $nombre = $data['nombre'];
+            // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
+            if (isset($data['nombre']) && strlen($data['nombre']) > 50){
+                $errores[] = 'El campo nombre excede los caracteres permitidos';
+            }
+            else {
+                // Nombre de la localidad ya existe 
+                $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
+                $consulta_repetido = $connection->query($sql);
+                if ($consulta_repetido->rowCount()> 0)
+                    $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
+            }
+        }
+        // Verifico si existe el ID
         $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
-        if ($consulto_id->rowCount()> 0){
-            // Nombre de la localidad ya existe (Exluyendo el ID)
-            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'";
-            $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0){ 
-                $errores['nombreya'] = 'El nombre de la localidad ya esta asignado a otra id';
-            }else{
-            $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";
-                $consulta = $connection->prepare($sql);
-                $consulta->bindValue(":nombre", $nombre);
-                $consulta->execute();
-                $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-                return $response->withStatus(201);
-            }
-        }else{ 
-                $errores['id']= 'El tipo de propiedad con el id: '. $id . ' no existe';
-        }
+        if ($consulto_id->rowCount() <=0) $errores['id']= 'El tipo de propiedad con el id: '. $id . ' no existe';
+            
         /// Mostrar todos los errores
         if (!empty($errores)){
             $error = "Errores: <br>";
@@ -322,6 +312,14 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             $response->getBody()->write(json_encode([$error]));
             return $response->withStatus(400);
         }
+        else{
+            $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = '". $id ."'";
+                $consulta = $connection->prepare($sql);
+                $consulta->bindValue(":nombre", $nombre);
+                $consulta->execute();
+                $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
+                return $response->withStatus(201);
+            }
     }catch(PDOException $e){
     $payload = json_encode([
             'status' => "Bad Request",
@@ -395,6 +393,10 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
 $app->post('/inquilinos', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
+    try{
+        $connection = getConnection();
+        $documento = $data['documento'];  
+        $email = $data['email'];
 
     /// Verificar si existen todos los campos
     $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
@@ -421,21 +423,6 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
         $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
     }
-
-    /// Mostrar todos los errores
-    if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-        }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus(400);
-    }
-
-    try{
-        $connection = getConnection();
-        $documento = $data['documento'];  
-        $email = $data['email'];
 
         /// Variable para obtener el dato documento y email
         $sql = "SELECT * FROM inquilinos WHERE documento = '". $documento ."'";
@@ -739,8 +726,8 @@ $app->post('/propiedades', function(Request $request, Response $response){
     }
 
     // Verificar si la fecha tiene un formato correcto
-    if (isset($data['fecha_inicio_disponibilidad'])) {
-        $fecha = $data['fecha_inicio_disponibilidad'];
+    if (isset($data['fecha_desde'])) {
+        $fecha = $data['fecha_desde'];
         $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
     
         $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
@@ -852,8 +839,8 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
     }
 
     // Verificar si la fecha tiene un formato correcto
-    if (isset($data['fecha_inicio_disponibilidad'])) {
-        $fecha = $data['fecha_inicio_disponibilidad'];
+    if (isset($data['fecha_desde'])) {
+        $fecha = $data['fecha_desde'];
         $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
     
         $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
