@@ -210,36 +210,35 @@ $app->get('/localidades', function(Request $request, Response $response){
 
 // ================================[ TIPO PROPIEDAD ]=========================================
 
-// Crear Tipo de Propiedad (falta arreglo de errores)
+// Crear Tipo de Propiedad (tira warning si falta campo nombre)
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
     $data = $request->getParsedBody();
-
-    /// Verificar si existe el campo
-    if (!isset($data['nombre'])){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre es requerido']));
-        return $response->withStatus(400);
-    }
-
-    // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
-    if (strlen($data['nombre']) > 50){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
-        return $response->withStatus(400);
-    }
         try{
             $connection = getConnection();
             $nombre = $data['nombre'];
-
-
-
-            /// Verificar si el nombre del tipo de propeidad ya existe
-            $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."'";
-            $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0){
-                $response->getBody()->write(json_encode(['error'=> 'El nombre no puede repetirse']));
+            $errores = [];
+            /// Verificar si existe el campo
+            if (!isset($data['nombre'])) $errores['nombreno'] = 'El campo nombre es requerido';
+            else{
+                // Verificar si el nombre del tipo de propiedad supera los 50 caracteres
+                if (strlen($data['nombre']) > 50) $errores['nombreexede'] = 'El campo nombre excede los caracteres permitidos';
+                
+                /// Verificar si el nombre del tipo de propiedad ya existe
+                $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."'";
+                $consulta_repetido = $connection->query($sql);
+                if ($consulta_repetido->rowCount()> 0)  $errores['nombrerepe'] = 'El nombre no puede repetirse';
+            }
+            /// Mostrar todos los errores
+            if (!empty($errores)){
+                $error = "Errores: <br>";
+                foreach($errores as $value){
+                    $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+                }
+                $response->getBody()->write(json_encode([$error]));
                 return $response->withStatus(400);
-
+            }
             /// Agrego el tipo de propiedad
-            }else{
+            else {
                 $sql="INSERT INTO tipo_propiedades (nombre) VALUES (:nombre)";
                 $consulta = $connection->prepare($sql);
                 $consulta->bindValue("nombre", $nombre);
@@ -248,6 +247,8 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
                 $response->getBody()->write(json_encode(['message'=> 'tipo de propiedad creada']));
                 return $response->withStatus(201);
             }
+         
+        
         }catch (PDOException $e){ 
 
         $response->getBody()->write(json_encode([
@@ -257,50 +258,55 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
        }
 });
 
-// Editar Tipo de propiedad (falta arreglo de errores) 
+// Editar Tipo de propiedad (tira warning si falta campo nombre)
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
-
-    /// verificar si existe el campo nombre
-    if (!isset($data['nombre'])){
-        $response->getBody()->write(json_encode(['error'=> 'El campo nombre con el nuevo nombre es requerido']));
-         return $response->withStatus(400);
-    }else{
         try{
+            $errores = [];
             $connection = getConnection();
             $nombre = $data['nombre'];
 
+            /// verificar si existe el campo nombre
+            if (!isset($data['nombre'])) $errores['nombreno'] = 'El campo nombre es requerido';
+
+            else {
             // Nombre del tipo de propiedad supera los 50 caracteres
-            if (strlen($nombre) > 50){
-                $response->getBody()->write(json_encode(['error'=> 'El campo nombre excede los caracteres permitidos']));
-                return $response->withStatus(400);
-            }
-                    
+            if (strlen($nombre) > 50) $errores['nombreexe'] = 'El campo nombre excede los caracteres permitidos';
+
             // Nombre de la localidad ya existe
             $sql ="SELECT * FROM tipo_propiedades WHERE nombre = '". $nombre ."' AND id != '". $id ."'"; 
             $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0){ 
-                $response->getBody()->write(json_encode(['error'=> 'El nombre del tipo de localidad ya esta asignada a otra id']));
+            if ($consulta_repetido->rowCount()> 0) $errores['nombredupli'] = 'El nombre del tipo de localidad ya esta asignada a otra id';
+            }
+
+            /// Verificar si existe alguna propiedad con ese id
+            $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
+            $consulto_id = $connection->query($sql);
+            if ($consulto_id->rowCount()<= 0) $errores['noexiste'] = 'El tipo de propiedad con el id: '. $id . ' no existe';
+                        
+
+            /// Mostrar todos los errores
+            if (!empty($errores)){
+                $error = "Errores: <br>";
+                foreach($errores as $value){
+                    $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+                }
+                $response->getBody()->write(json_encode([$error]));
                 return $response->withStatus(400);
+            }
 
             // Edita el tipo de propiedad
-            }else{
-                $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
-                $consulto_id = $connection->query($sql);
-                /// Verificar si existe el campo y modificar
-                if ($consulto_id->rowCount()> 0){                       
-                     $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";        
-                     $consulta = $connection->prepare($sql);
-                     $consulta->bindValue(":nombre", $nombre);
-                     $consulta->bindValue(":id", $id);
-                     $consulta->execute();                                                            
-                     $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-                     return $response->withStatus(201);                   
-                }else{ $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad con el id: '. $id . ' no existe']));
-                        return $response->withStatus(404);
-                }
+            else{           
+                $sql = "UPDATE tipo_propiedades SET nombre = :nombre WHERE id = :id";        
+                $consulta = $connection->prepare($sql);
+                $consulta->bindValue(":nombre", $nombre);
+                $consulta->bindValue(":id", $id);
+                $consulta->execute();                                                            
+                $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
+                return $response->withStatus(201);                   
             }   
+
         }catch(PDOException $e){
             $payload = json_encode([
                  'status' => "Bad Request",
@@ -310,7 +316,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
         }
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
-}});
+});
 
 // Eliminar Tipo de Propiedad
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
