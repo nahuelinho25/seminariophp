@@ -331,6 +331,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
+
 // Eliminar Tipo de Propiedad
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
@@ -1030,60 +1031,51 @@ $app->post('/reservas', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
 
-    /// Verificar si existen todos los campos requeridos
-    $campos_requeridos =['propiedad_id', 'inquilino_id', 'fecha_desde', 'cantidad_noches'];
-    foreach($campos_requeridos as $campo){
-        if(!isset($data[$campo])){
-        $errores[$campo] = 'El campo '. $campo . ' es requerido';
-        }
-    }
-
-    // Verificar si la fecha tiene un formato correcto
-    if (isset($data['fecha_desde'])) {
-        $fecha = $data['fecha_desde'];
-        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
-    
-        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
-        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
-            // La fecha no tiene el formato correcto
-            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-        }
-    }
-
-    /// Mostrar todos los errores de los campos
-    if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-        }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus(400);
-    }
-
     try{
         $connection = getConnection();
-        /// Variables para las verificaciones
-        $propiedad_id = $data['propiedad_id'];
-        $inquilino_id = $data['inquilino_id'];
 
-        /// Verificar si el inquilino ya tiene una reserva en la misma propiedad
-        $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."'";
-        $consulta_reserva_existente = $connection->query($sql);
-        if ($consulta_reserva_existente->rowCount() > 0) {
-            $errores = 'El inquilino ya tiene una reserva en esta propiedad';
+        /// Verificar si existen todos los campos requeridos
+        $campos_requeridos =['propiedad_id', 'inquilino_id', 'fecha_desde', 'cantidad_noches'];
+        foreach($campos_requeridos as $campo){
+            if(!isset($data[$campo])){
+            $errores[$campo] = 'El campo '. $campo . ' es requerido';
+            }
         }
 
-        /// Verificar si la propiedad esta disponible y el inquilino esta activo
-        $sql = "SELECT disponible FROM propiedades WHERE id = '". $propiedad_id ."' AND disponible = 1 ";
-        $propiedad_disponible = $connection->query($sql);
-        if($propiedad_disponible->rowCount() == 0){
-            $errores['propiedad_disponible'] = 'La propiedad con id: '.$propiedad_id.' no esta disponible o no existe';
+        // Verificar si la fecha tiene un formato correcto
+        if (isset($data['fecha_desde'])) {
+            $fecha = $data['fecha_desde'];
+            $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+        
+            $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+            if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+                // La fecha no tiene el formato correcto
+                $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+            }
         }
 
-        $sql = "SELECT activo FROM inquilinos WHERE id = '". $inquilino_id ."' AND activo = 1 ";
-        $inquilno_activo = $connection->query($sql);
-        if($inquilno_activo->rowCount() == 0){
-            $errores['inquilino_activo']= 'El inquilino con id: '.$inquilino_id.' no esta activo o no existe';
+        if (isset($data['propiedad_id']) && isset($data['inquilino_id'])) {
+            /// Variables para las verificaciones
+            $propiedad_id = $data['propiedad_id'];
+            $inquilino_id = $data['inquilino_id'];
+            /// Verificar si el inquilino ya tiene una reserva en la misma propiedad
+            $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."'";
+            $consulta_reserva_existente = $connection->query($sql);
+            if ($consulta_reserva_existente->rowCount() > 0) $errores = 'El inquilino ya tiene una reserva en esta propiedad';
+            
+
+            /// Verificar si la propiedad esta disponible y el inquilino esta activo
+            $sql = "SELECT disponible FROM propiedades WHERE id = '". $propiedad_id ."' AND disponible = 1 ";
+            $propiedad_disponible = $connection->query($sql);
+            if($propiedad_disponible->rowCount() == 0){
+                $errores['propiedad_disponible'] = 'La propiedad con id: '.$propiedad_id.' no esta disponible o no existe';
+            }
+
+            $sql = "SELECT activo FROM inquilinos WHERE id = '". $inquilino_id ."' AND activo = 1 ";
+            $inquilno_activo = $connection->query($sql);
+            if($inquilno_activo->rowCount() == 0){
+                $errores['inquilino_activo']= 'El inquilino con id: '.$inquilino_id.' no esta activo o no existe';
+            }
         }
 
         /// Mostrar todos los errores
@@ -1095,28 +1087,29 @@ $app->post('/reservas', function(Request $request, Response $response){
         $response->getBody()->write(json_encode([$error]));
         return $response->withStatus(400);
         }
+        else{
+            /// Obtener el valor de la noche en una propiedad
+            $propiedad_id = $data['propiedad_id'];
+            $sql = "SELECT valor_noche FROM propiedades WHERE id = '". $propiedad_id ."'";
+            $consulta_valor = $connection->query($sql);
+            $valor_noche_dato = $consulta_valor->fetch(PDO::FETCH_ASSOC);
 
-        /// Obtener el valor de la noche en una propiedad
-        $propiedad_id = $data['propiedad_id'];
-        $sql = "SELECT valor_noche FROM propiedades WHERE id = '". $propiedad_id ."'";
-        $consulta_valor = $connection->query($sql);
-        $valor_noche_dato = $consulta_valor->fetch(PDO::FETCH_ASSOC);
+            $valor_noche = $valor_noche_dato['valor_noche'];
+            $valor_total = $valor_noche * $data['cantidad_noches'];
 
-        $valor_noche = $valor_noche_dato['valor_noche'];
-        $valor_total = $valor_noche * $data['cantidad_noches'];
-
-        /// Agrego La Reserva
-        $sql = "INSERT INTO reservas (propiedad_id, inquilino_id, fecha_desde, cantidad_noches, valor_total) 
-                VALUES (:propiedad_id, :inquilino_id, :fecha_desde, :cantidad_noches, :valor_total)";
-        $consulta = $connection->prepare($sql);
-        $consulta->bindValue(":propiedad_id", $data['propiedad_id']);
-        $consulta->bindValue(":inquilino_id", $data['inquilino_id']);
-        $consulta->bindValue(":fecha_desde", $data['fecha_desde']);
-        $consulta->bindValue(":cantidad_noches", $data['cantidad_noches']);
-        $consulta->bindValue(":valor_total", $valor_total);
-        $consulta->execute();
-        $response->getBody()->write(json_encode(['Message'=> 'Reserva Creada Correctamente']));
-        return $response->withStatus(200);
+            /// Agrego La Reserva
+            $sql = "INSERT INTO reservas (propiedad_id, inquilino_id, fecha_desde, cantidad_noches, valor_total) 
+                    VALUES (:propiedad_id, :inquilino_id, :fecha_desde, :cantidad_noches, :valor_total)";
+            $consulta = $connection->prepare($sql);
+            $consulta->bindValue(":propiedad_id", $data['propiedad_id']);
+            $consulta->bindValue(":inquilino_id", $data['inquilino_id']);
+            $consulta->bindValue(":fecha_desde", $data['fecha_desde']);
+            $consulta->bindValue(":cantidad_noches", $data['cantidad_noches']);
+            $consulta->bindValue(":valor_total", $valor_total);
+            $consulta->execute();
+            $response->getBody()->write(json_encode(['Message'=> 'Reserva Creada Correctamente']));
+            return $response->withStatus(200);
+        }
 
     }catch (PDOException $e){ 
         $response->getBody()->write(json_encode([
