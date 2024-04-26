@@ -707,76 +707,65 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
 
 // ================================[ PROPIEDADES ]=========================================
 
-/// Crear Propiedad
+/// Crear Propiedad(probado)
 $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
-
-    /// Verificar si existen todos los campos requeridos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
-    'disponible', 'valor_noche', 'tipo_propiedad_id'];
-    foreach($campos_requeridos as $campo){
-        if(!isset($data[$campo])){
-        $errores[$campo] = 'El campo '. $campo . ' es requerido';
-        }
-    }
-
-    /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
-    if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
-        $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
-    }
-
-    // Verificar si la fecha tiene un formato correcto
-    if (isset($data['fecha_desde'])) {
-        $fecha = $data['fecha_desde'];
-        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
-    
-        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
-        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
-            // La fecha no tiene el formato correcto
-            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-        }
-    }
-
-    /// Mostrar todos los errores
-    if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-        }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus(400);
-    }
-    
     try{
         $connection = getConnection();
-        $domicilio = $data['domicilio'];
 
-        // Verificar si el nombre del domicilio de la propiedad ya existe
-        $sql ="SELECT * FROM propiedades WHERE domicilio = '". $domicilio ."'";
-        $consulta_repetido = $connection->query($sql);
-        if ($consulta_repetido->rowCount()> 0){
-            $errores['domicilio_repetido'] = 'El nombre del deomicilio ya esta en uso';
+        /// Verificar si existen todos los campos requeridos
+        $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
+        'disponible', 'valor_noche', 'tipo_propiedad_id'];
+        foreach($campos_requeridos as $campo){
+            if(!isset($data[$campo])){
+            $errores[$campo] = 'El campo '. $campo . ' es requerido';
+            }
         }
 
-        /// Variables para verificar si las IDs existen
-        $localidad_id = $data['localidad_id'];
-        $tipo_propiedad_id = $data['tipo_propiedad_id'];
-
-        /// Verificar si el ID de localidad existe en la tabla localidades
-        $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
-        $consulta_localidad = $connection->query($sql);
-        if($consulta_localidad->rowCount() == 0){
-            $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
+        /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
+        if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
+            $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
         }
 
-        /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
-        $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$tipo_propiedad_id."'";
-        $consulta_tipo_propiedades = $connection->query($sql);
-        if($consulta_tipo_propiedades->rowCount() == 0){
-            $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
+        // Verificar si la fecha tiene un formato correcto
+        if (isset($data['fecha_desde'])) {
+            $fecha = $data['fecha_desde'];
+            $formato_correcto = 'Y-m-d';
+        
+            $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+            if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+                // La fecha no tiene el formato correcto
+                $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+            }
         }
 
+        if (isset($data['domicilio']) && isset($data['localidad_id']) && isset($data['tipo_propiedad_id'])) {
+            /// Variables para verificar las consultas
+            $domicilio = $data['domicilio'];
+            $localidad_id = $data['localidad_id'];
+            $tipo_propiedad_id = $data['tipo_propiedad_id'];
+            // Verificar si el nombre del domicilio de la propiedad ya existe
+            $sql ="SELECT * FROM propiedades WHERE domicilio = '". $domicilio ."'";
+            $consulta_repetido = $connection->query($sql);
+            if ($consulta_repetido->rowCount()> 0){
+                $errores['domicilio_repetido'] = 'El nombre del demicilio ya esta en uso';
+            }
+
+            /// Verificar si el ID de localidad existe en la tabla localidades
+            $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
+            $consulta_localidad = $connection->query($sql);
+            if($consulta_localidad->rowCount() == 0){
+                $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
+            }
+
+            /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
+            $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$tipo_propiedad_id."'";
+            $consulta_tipo_propiedades = $connection->query($sql);
+            if($consulta_tipo_propiedades->rowCount() == 0){
+                $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
+            }
+        }
         /// Mostrar todos los errores
         if (!empty($errores)){
             $error = "Errores: <br>";
@@ -819,84 +808,69 @@ $app->post('/propiedades', function(Request $request, Response $response){
     }
 });
 
-// Editar Propiedad
+// Editar Propiedad(probado)
 $app->put('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
     $errores = [];
-
-    /// Verificar si existen todos los campos
-    $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
-    'disponible', 'valor_noche', 'tipo_propiedad_id'];
-    foreach($campos_requeridos as $campo){
-        if(!isset($data[$campo])){
-        $errores[$campo] = 'El campo '. $campo . ' es requerido';
-        }
-    }
-
-    /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
-    if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
-        $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
-    }
-
-    // Verificar si la fecha tiene un formato correcto
-    if (isset($data['fecha_desde'])) {
-        $fecha = $data['fecha_desde'];
-        $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
-    
-        $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
-        if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
-            // La fecha no tiene el formato correcto
-            $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-        }
-    }
-
-    /// Mostrar todos los errores
-    if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-        }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus(400);
-    }
-
     try{
-        $connection = getConnection(); 
-        /// Obtener los datos
-        $domicilio = $data['domicilio'];
-        $localidad_id = $data['localidad_id'];
-        $cantidad_huespedes = $data['cantidad_huespedes'];
-        $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
-        $cantidad_dias = $data['cantidad_dias']; 
-        $disponible = $data['disponible']; 
-        $valor_noche = $data['valor_noche']; 
-        $tipo_propiedad_id = $data['tipo_propiedad_id'];
+        $connection = getConnection();
+        /// Verificar si existen todos los campos
+        $campos_requeridos =['domicilio', 'localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'cantidad_dias', 
+        'disponible', 'valor_noche', 'tipo_propiedad_id'];
+        foreach($campos_requeridos as $campo){
+            if(!isset($data[$campo])){
+            $errores[$campo] = 'El campo '. $campo . ' es requerido';
+            }
+        }
 
+        // Verificar si la fecha tiene un formato correcto
+        if (isset($data['fecha_desde'])) {
+            $fecha = $data['fecha_desde'];
+            $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
+        
+            $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha);
+            if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha) {
+                // La fecha no tiene el formato correcto
+                $errores[] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
+            }
+        }
+        
         // Verificar si la propiedad existe
         $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount()> 0){   
+            if (isset($data['domicilio']) && isset($data['localidad_id']) && isset($data['tipo_propiedad_id'])) {
+                /// Obtener los datos
+                $domicilio = $data['domicilio'];
+                $localidad_id = $data['localidad_id'];
+                $cantidad_huespedes = $data['cantidad_huespedes'];
+                $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
+                $cantidad_dias = $data['cantidad_dias']; 
+                $disponible = $data['disponible']; 
+                $valor_noche = $data['valor_noche']; 
+                $tipo_propiedad_id = $data['tipo_propiedad_id'];
 
-            // Verificar si el de domicilio de la propiedad ya esta en uso (Excluyendo el ID )
-            $sql ="SELECT * FROM propiedades WHERE domicilio = '". $domicilio ."' AND id != '". $id ."'";
-            $consulta_repetido = $connection->query($sql);
-            if ($consulta_repetido->rowCount()> 0){
-                $errores['domicilio_repetido'] = 'El nombre del domicilio ya esta en uso';
-            }
-            
-            /// Verificar si el ID de localidad existe en la tabla localidades
-            $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
-            $consulta_localidad = $connection->query($sql);
-            if($consulta_localidad->rowCount() == 0){
-                $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
-            }
+                // Verificar si el de domicilio de la propiedad ya esta en uso (Excluyendo el ID )
+                $sql ="SELECT * FROM propiedades WHERE domicilio = '". $domicilio ."' AND id != '". $id ."'";
+                $consulta_repetido = $connection->query($sql);
+                if ($consulta_repetido->rowCount()> 0){
+                    $errores['domicilio_repetido'] = 'El nombre del domicilio ya esta en uso';
+                }
+                
+                /// Verificar si el ID de localidad existe en la tabla localidades
+                $sql = "SELECT * FROM localidades WHERE id = '".$localidad_id."'";
+                $consulta_localidad = $connection->query($sql);
+                if($consulta_localidad->rowCount() == 0){
+                    $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
+                }
 
-            /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
-            $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$tipo_propiedad_id."'";
-            $consulta_tipo_propiedades = $connection->query($sql);
-            if($consulta_tipo_propiedades->rowCount() == 0){
-                $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
+                /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
+                $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$tipo_propiedad_id."'";
+                $consulta_tipo_propiedades = $connection->query($sql);
+                if($consulta_tipo_propiedades->rowCount() == 0){
+                    $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
+                }
             }
 
             /// Mostrar todos los errores
@@ -1026,7 +1000,7 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
 
 // ================================[ RESERVAS ]=========================================
 
-/// Crear Reserva
+/// Crear Reserva(probado)
 $app->post('/reservas', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -1061,7 +1035,7 @@ $app->post('/reservas', function(Request $request, Response $response){
             /// Verificar si el inquilino ya tiene una reserva en la misma propiedad
             $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."'";
             $consulta_reserva_existente = $connection->query($sql);
-            if ($consulta_reserva_existente->rowCount() > 0) $errores['inquilino_existe'] = 'El inquilino ya tiene una reserva en esta propiedad';
+            if ($consulta_reserva_existente->rowCount() > 0) $errores['inquilino_reserva'] = 'El inquilino ya tiene una reserva en esta propiedad';
             
 
             /// Verificar si la propiedad esta disponible y el inquilino esta activo
