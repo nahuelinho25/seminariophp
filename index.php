@@ -664,12 +664,11 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Historial de reservas de un inquilino (probar ?)
+/// Historial de reservas de un inquilino (PROBADO)
 $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Response $response, $args){
     $idInquilino = $args['idInquilino'];
     try{
         $connection = getConnection();
-
         // Verificar si el inquilino existe
         $sql = "SELECT * FROM inquilinos WHERE id = '". $idInquilino ."'";
         $consulto_id = $connection->query($sql);
@@ -679,17 +678,35 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
             WHERE reservas.inquilino_id = '" .$idInquilino. "'";
             $consulta_reservas = $connection->query($sql);
             $reservas = $consulta_reservas->fetchAll(PDO::FETCH_ASSOC);
+
+            /// Limpiar campos null y volver mas estetico
+            $mostrar='';
+            $num= 0;
+            foreach($reservas as $reserva){
+                $num++;
+                $mostrar .= '--- Reserva: '. $num .' ---' . '<br>';
+                foreach($reserva as $campo => $valor){
+                    if ($valor != null) $mostrar .= '<br>' .$campo . ':'. $valor . '<br>';
+                }
+                $mostrar .= '<br>';
+            }
+            
             // Verificar si el inquilino tiene reservas
             if (!$reservas){
                 $response->getBody()->write(json_encode(['message'=> 'El inquilino no tiene reservas']));
-                return $response->withStatus(404);
+                $code=404;
             }
-            $response->getBody()->write(json_encode($reservas));
-            return $response->withStatus(201);
+            else {
+                $response->getBody()->write(json_encode($mostrar));
+                $code=201;
+            }
+        
         }else{
             $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $idInquilino . ' no existe']));
-            return $response->withStatus(404);
+            $code=404;
         }
+        return $response->withStatus($code);
+
     }catch (PDOException $e){
         $payload = json_encode ([
             'status' => "Bad Request",
@@ -1200,8 +1217,7 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
             $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
             $reservas_id = $connection->query($sql);
             /// Verificar si existe el id
-            if ($reservas_id->rowCount()> 0){
-                
+            if ($reservas_id->rowCount()> 0){    
                 /// Verificar si fecha_desde es menor que la fecha actual
                 $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
                 $consulta_fecha = $connection->query($sql);
@@ -1210,12 +1226,13 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
                     $response->getBody()->write(json_encode(['error'=> 'No se puede eliminar la reserva porque ya comenzo']));
                     return $response->withStatus(400);
                 }           
-
-                $sql = "DELETE FROM reservas WHERE id = '". $id ."' ";
-                $query = $connection->query($sql);
-                $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode(['message'=> 'La reserva se elimino correctamente']));
-                return $response->withStatus(201);
+                else{
+                    $sql = "DELETE FROM reservas WHERE id = '". $id ."' ";
+                    $query = $connection->query($sql);
+                    $query->fetch(PDO::FETCH_ASSOC);
+                    $response->getBody()->write(json_encode(['message'=> 'La reserva se elimino correctamente']));
+                    return $response->withStatus(201);
+                }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con id: '.$id.' no existe']));
                 return $response->withStatus(404);
             }  
