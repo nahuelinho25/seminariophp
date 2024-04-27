@@ -390,57 +390,62 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
 
 // ================================[ INQUILINOS ]=========================================
 
-/// Crear Inquilino
+/// Crear Inquilino (PROBADO)
 $app->post('/inquilinos', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
     try{
         $connection = getConnection();
-        $documento = $data['documento'];  
-        $email = $data['email'];
 
-    /// Verificar si existen todos los campos
-    $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
-    foreach($campos_requeridos as $campo){
-        if(!isset($data[$campo])){
-        $errores[$campo] = 'El campo '. $campo . ' es requerido';
-        }
-    }
 
-    /// Verificar el limite de caracteres de todos los campos
-    $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
-    foreach($max_longitudes as $campo => $max_longitud){
-        if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
-            $errores[$campo] = 'El campo '.$campo.' supera los caracteres permitidos';          
-        }
-    }
-
-    /// Verificar si el campo 'correo' tiene un formato valido
-    if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
-        $errores['email'] = 'El campo email tiene un formato no valido';
-    }
-
-    /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
-    if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
-        $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
-    }
-
-        /// Variable para obtener el dato documento y email
-        $sql = "SELECT * FROM inquilinos WHERE documento = '". $documento ."'";
-        $nombre_usuario_repetido = $connection->query($sql);
-        $sql2 = "SELECT * FROM inquilinos WHERE email = '". $email ."'";
-        $email_repetido = $connection->query($sql2);
-
-        /// Verificar si el nombre de usuario ya existe o esta en uso
-        if ($nombre_usuario_repetido->rowCount() > 0){
-            $errores['documento'] = 'El documento ya esta en uso';
+        /// Verificar si existen todos los campos
+        $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
+        foreach($campos_requeridos as $campo){
+            if(!isset($data[$campo])){
+            $errores[$campo] = 'El campo '. $campo . ' es requerido';
+            }
         }
 
-        /// Verificar si el email ya esta en uso
-        if ($email_repetido->rowCount() > 0){
-            $errores['email'] = 'El email ya esta en uso';
+        /// Verificar el limite de caracteres de todos los campos
+        $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
+        foreach($max_longitudes as $campo => $max_longitud){
+            if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
+                $errores[$campo.' limite'] = 'El campo '.$campo.' supera los caracteres permitidos';          
+            }
         }
 
+        /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
+        if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
+            $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
+        }
+
+        if (isset($data['email'])) { 
+            $email = $data['email'];
+            /// Verificar si el campo 'correo' tiene un formato valido
+            if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
+                $errores['email'] = 'El campo email tiene un formato no valido';
+            }
+            else{
+            $sql2 = "SELECT * FROM inquilinos WHERE email = '". $email ."'";
+            $email_repetido = $connection->query($sql2);
+            /// Verificar si el email ya esta en uso
+            if ($email_repetido->rowCount() > 0){
+                $errores['email'] = 'El email ya esta en uso';
+            }
+            }
+        }
+
+        if (isset($data['documento'])) { 
+            $documento = $data['documento'];
+            /// Variable para obtener el dato documento y email
+            $sql = "SELECT * FROM inquilinos WHERE documento = '". $documento ."'";
+            $nombre_usuario_repetido = $connection->query($sql);
+            /// Verificar si el nombre de usuario ya existe o esta en uso
+            if ($nombre_usuario_repetido->rowCount() > 0){
+                $errores['documento'] = 'El documento ya esta en uso';
+            }
+        }        
+        
         /// Mostrar todos los errores
         if (!empty($errores)){
             $error = "Errores: <br>";
@@ -475,87 +480,80 @@ $app->post('/inquilinos', function(Request $request, Response $response){
 
 });
 
-// Editar Inquilino
+// Editar Inquilino (PROBADO)
 $app->put('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
     $errores = [];
-
-    /// Verificar si existen todos los campos
-    $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
-    foreach($campos_requeridos as $campo){
-        if(!isset($data[$campo])){
-        $errores[$campo] = 'El campo '. $campo . ' es requerido';
-        }
-    }
-    
-    /// Verificar el limite de caracteres de todos los campos
-    $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
-    foreach($max_longitudes as $campo => $max_longitud){
-        if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
-            $errores[$campo] = 'El campo '.$campo.' supera los caracteres permitidos';          
-        }
-    }
-
-    /// Verificar si el campo 'correo' tiene un formato valido
-    if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
-        $errores['email'] = 'El campo email tiene un formato no valido';
-    }
-
-    /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
-    if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
-        $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
-    }
-
-    /// Mostrar todos los errores
-    if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-        }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus(400);
-    }
-
     try{
         $connection = getConnection(); 
-        /// Obtener los datos
-        $documento = $data['documento'];
-        $apellido = $data['apellido'];
-        $nombre = $data['nombre'];
-        $email = $data['email'];
-        $activo = $data['activo']; 
+        /// Verificar si existen todos los campos
+        $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
+        foreach($campos_requeridos as $campo){
+            if(!isset($data[$campo])){
+            $errores[$campo] = 'El campo '. $campo . ' es requerido';
+            }
+        }
+        
+        /// Verificar el limite de caracteres de todos los campos
+        $max_longitudes = ['documento' => 20, 'apellido' => 15, 'nombre' => 25, 'email' => 20];
+        foreach($max_longitudes as $campo => $max_longitud){
+            if (isset($data[$campo]) && strlen($data[$campo]) > $max_longitud){
+                $errores[$campo] = 'El campo '.$campo.' supera los caracteres permitidos';          
+            }
+        }
+
+        /// Verificaciones campo 'correo'
+        if  (isset($data['email'])) {
+            $email = $data['email'];
+            /// Verificar si el campo 'correo' tiene un formato valido
+            if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
+                $errores['email'] = 'El campo email tiene un formato no valido';
+            }else{    
+                $sql2 ="SELECT * FROM inquilinos WHERE email = '". $email ."' AND id != '". $id ."'";
+                $consulta_repetido_email = $connection->query($sql2);
+                // Verificar si el correo electrónico ya esta en uso (Excluyendo el ID )
+                if ($consulta_repetido_email->rowCount()> 0){ 
+                    $errores['email_repetido'] = 'El email ya esta asignado a otra id';
+                }
+            }
+        }
+
+        /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
+        if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){ 
+            $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
+        }
+
+        if(isset($data['documento'])) {
+            $documento = $data['documento'];
+            $sql ="SELECT * FROM inquilinos WHERE documento = '". $documento ."' AND id != '". $id ."'" ;
+            $consulta_repetido_usuario = $connection->query($sql);
+            // Verificar si el documento ya esta en uso (Excluyendo el ID )
+            if ($consulta_repetido_usuario->rowCount()> 0){ 
+                $errores['documento_repetido'] = 'El documento ya esta asignado a otra id';   
+            }
+        }
 
         // Verificar si el inquilino existe
         $sql = "SELECT * FROM inquilinos WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
-        if ($consulto_id->rowCount()> 0){
-
-            // Verificar si el nombre de usuario y el email ya esta en uso (Excluyendo el ID )
-            $sql ="SELECT * FROM inquilinos WHERE documento = '". $documento ."' AND id != '". $id ."'" ;
-            $consulta_repetido_usuario = $connection->query($sql);
-            $sql2 ="SELECT * FROM inquilinos WHERE email = '". $email ."' AND id != '". $id ."'";
-            $consulta_repetido_email = $connection->query($sql2);
-
-            // Verificar si el nombre de usuario ya esta en uso (Excluyendo el ID )
-            if ($consulta_repetido_usuario->rowCount()> 0){ 
-                $errores['documento_repetido'] = 'El documento ya esta asignado a otra id';   
-
-            // Verificar si el correo electrónico ya esta en uso (Excluyendo el ID )
-            }if ($consulta_repetido_email->rowCount()> 0){ 
-                $errores['email_repetido'] = 'El email ya esta asignado a otra id';
+        if ($consulto_id->rowCount()<= 0){
+            $errores['activo'] = 'El inquilino con el id: '. $id . ' no existe';
+        }
+        
+        /// Mostrar todos los errores
+        if (!empty($errores)){
+            $error = "Errores: <br>";
+            foreach($errores as $value){
+                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
             }
-
-            /// Mostrar todos los errores
-            if (!empty($errores)){
-                $error = "Errores: <br>";
-                foreach($errores as $value){
-                    $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-                }
-                $response->getBody()->write(json_encode([$error]));
-                return $response->withStatus(400);
-            }
-            
+            $response->getBody()->write(json_encode([$error]));
+            return $response->withStatus(400);
+        }
+        else{
+            $activo = $data['activo'];
+            $apellido = $data['apellido'];
+            $nombre = $data['nombre'];  
             /// Editar Inquilino
             $sql = "UPDATE inquilinos SET documento = :documento, apellido = :apellido, 
                     nombre = :nombre, email = :email, activo = :activo WHERE id = '". $id ."'";
@@ -568,10 +566,8 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El inquilino con el id: '. $id . ' se edito de forma exitosa']));
             return $response->withStatus(201);
+            }
             
-        }else{ $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $id . ' no existe']));
-            return $response->withStatus(404);
-        } 
     }catch(PDOException $e){
         $payload = json_encode([
             'status' => "Bad Request",
