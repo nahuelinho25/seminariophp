@@ -957,19 +957,51 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Listar Propiedades
+/// Listar Propiedades (PROBADO)
 $app->get('/propiedades', function(Request $request, Response $response){
     $connection = getConnection();
-
+    $data = $request->getParsedBody();
     try {
-        $query = $connection->query('SELECT * FROM propiedades ORDER BY id');
-        $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
 
-        $payload = json_encode([
-            'status' => "success",
-            'code' => 200,
-            'data' => $propiedades
-        ]);
+        $campofiltros =['localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'disponible'];
+        $sql= "SELECT * FROM propiedades WHERE";
+        $primera = true; 
+        // Compruebo filtros activos
+        foreach($campofiltros as $campo){
+            if(isset($data[$campo])){
+                $filtros = "";
+                if (!$primera) {
+                    $filtros .= " AND "; // Agregar AND si no es la primera vez que se agrega un filtro
+                } else {
+                    $primera = false; // Cambiar el estado para arrancar con los ANDs
+                }
+                $filtros .=  $campo." = '". $data[$campo] ."'";
+                //echo $sql. '<br>';
+                $sql .= " $filtros";
+            }
+        } 
+       // echo 'Code final: '. $sql. '<br>';
+
+        if (empty($filtros)) {
+            $query = $connection->query('SELECT * FROM propiedades ORDER BY id');
+            $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
+
+            $response->getBody()->write(json_encode($propiedades));
+            $code= 200;
+        }
+        else{
+            $query = $connection->query($sql);
+            $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
+            if (empty($propiedades)) {
+                $response->getBody()->write(json_encode('No hay propiedades que cumplan estos filtros'));
+                $code= 404;
+            }
+            else{
+            $response->getBody()->write(json_encode($propiedades));
+            $code= 200;
+            }
+        }
+        return $response->withStatus($code);
         
     } catch (PDOException $e){
         $payload = json_encode ([
