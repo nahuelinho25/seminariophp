@@ -47,26 +47,29 @@ function getConnection(){
 $app->post('/localidades',function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
+    $codeerro = [];
     try{
         $connection = getConnection();
 
         /// verificar si existe el campo nombre
         if (!isset($data['nombre'])){
             $errores['nombre'] = 'El campo nombre es requerido';
+            $codeerro['nombre'] = 404;
         }
         else{
             $nombre = $data['nombre'];
             // Verificar si el nombre de la localidad supera los 50 caracteres
             if (isset($data['nombre']) && strlen($data['nombre']) > 50){
-                $errores[] = 'El campo nombre excede los caracteres permitidos';
+                $errores['nombremax'] = 'El campo nombre excede los caracteres permitidos';
+                $codeerro['nombremax'] = 400;
             }
             else{
                 // Verificar si el nombre de la localidad ya existe
                 $sql ="SELECT * FROM localidades WHERE nombre = '". $nombre ."'";
                 $consulta_repetido = $connection->query($sql);
                 if ($consulta_repetido->rowCount()> 0){ 
-                    $response->getBody()->write(json_encode(['error'=> 'El  nombre no puede repetirse']));
-                    return $response->withStatus(400);
+                    $errores['nombrerepe'] = 'El  nombre no puede repetirse';
+                    $codeerro['nombrerepe'] = 400;
                 }
             }    
         } 
@@ -74,11 +77,11 @@ $app->post('/localidades',function(Request $request, Response $response){
         /// Mostrar todos los errores
         if (!empty($errores)){
             $error = "Errores: <br>";
-            foreach($errores as $value){
+            foreach($errores as $campo =>$value){
                 $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
             }
             $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus(400);
+            return $response->withStatus($codeerro[$campo]);
         }
 
         // Agrega la localidad
@@ -87,7 +90,6 @@ $app->post('/localidades',function(Request $request, Response $response){
             $consulta = $connection->prepare($sql);
             $consulta->bindValue("nombre", $nombre);
             $consulta->execute();
-
             $response->getBody()->write(json_encode(['message'=> 'localidad creada']));
             return $response->withStatus(201);
         }
