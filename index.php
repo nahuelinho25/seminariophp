@@ -177,10 +177,11 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
-                return $response->withStatus(201);
+                $code=201;
             }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
-                return $response->withStatus(404);
+                $code=404;
             }  
+            return $response->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -345,10 +346,13 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'El tipo de propiedad se elimino correctamente']));
-                return $response->withStatus(201);
-            }else{ $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
-                return $response->withStatus(404);
+                $code=200;
+            }else{ 
+                $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
+                $code=404;
             }  
+            return $response->withStatus($code);
+            
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -365,11 +369,8 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
 $app->get('/tipos_propiedad', function(Request $request, Response $response){
     try {
         $connection = getConnection();
-
         $query = $connection->query('SELECT * FROM tipo_propiedades ORDER BY nombre');
-
         $tipos = $query->fetchAll(PDO::FETCH_ASSOC);
-
         $payload = json_encode([
             'status' => "success",
             'code' => 200,
@@ -396,7 +397,6 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     $errores = [];
     try{
         $connection = getConnection();
-
 
         /// Verificar si existen todos los campos
         $campos_requeridos =['documento', 'apellido', 'nombre', 'email', 'activo'];
@@ -566,7 +566,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El inquilino con el id: '. $id . ' se edito de forma exitosa']));
             return $response->withStatus(201);
-            }
+        }
             
     }catch(PDOException $e){
         $payload = json_encode([
@@ -592,10 +592,12 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'El inquilino se elimino correctamente']));
-                return $response->withStatus(201);
-            }else{ $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
-                return $response->withStatus(404);
+                $code=200;
+            }else{ 
+                $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
+                $code=404;
             }  
+            return $response->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -647,11 +649,13 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
                 $query = $connection->query($sql);
                 $inquilinox = $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode([$inquilinox]));
-                return $response->withStatus(201);
+                $code=200;
 
-        }else{ $response->getBody()->write(json_encode(['error'=> 'El inquilino con id: '.$id.' no existe']));
-                return $response->withStatus(404);
+        }else{ 
+            $response->getBody()->write(json_encode(['error'=> 'El inquilino con id: '.$id.' no existe']));
+            $code=404;
          }  
+         return $response->withStatus($code);
 
     }catch (PDOException $e){
         $payload = json_encode ([
@@ -788,30 +792,31 @@ $app->post('/propiedades', function(Request $request, Response $response){
             $response->getBody()->write(json_encode([$error]));
             return $response->withStatus(400);
         }
-    
-        /// Agrego La Propiedad
-        $sql = "INSERT INTO propiedades (domicilio, localidad_id, cantidad_habitaciones, cantidad_banios, cochera, cantidad_huespedes,
-                fecha_inicio_disponibilidad, cantidad_dias, disponible, valor_noche, tipo_propiedad_id, imagen, tipo_imagen) 
-                VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, 
-                :fecha_inicio_disponibilidad, :cantidad_dias, :disponible, :valor_noche, :tipo_propiedad_id, :imagen, :tipo_imagen)";
-        $consulta = $connection->prepare($sql);
-        $consulta->bindValue(":domicilio", $data['domicilio']);
-        $consulta->bindValue(":localidad_id", $data['localidad_id']);
-        $consulta->bindValue(":cantidad_habitaciones", $data['cantidad_habitaciones']?? null);
-        $consulta->bindValue(":cantidad_banios", $data['cantidad_banios']?? null);
-        $consulta->bindValue(":cochera", $data['cochera']?? null);
-        $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
-        $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
-        $consulta->bindValue(":cantidad_dias", $data['cantidad_dias']);
-        $consulta->bindValue(":disponible", $data['disponible']);
-        $consulta->bindValue(":valor_noche", $data['valor_noche']);
-        $consulta->bindValue(":tipo_propiedad_id", $data['tipo_propiedad_id']);
-        $consulta->bindValue(":imagen", $data['imagen']?? null);
-        $consulta->bindValue(":tipo_imagen", $data['tipo_imagen']?? null);
-        $consulta->execute();
-        /// En los campos que no son requeridos les asigno null para tener un valor que se pueda vincular a la consulta sql
-        $response->getBody()->write(json_encode(['Message'=> 'Propiedad Creada Correctamente']));
-        return $response->withStatus(200);
+        else{
+            /// Agrego La Propiedad
+            $sql = "INSERT INTO propiedades (domicilio, localidad_id, cantidad_habitaciones, cantidad_banios, cochera, cantidad_huespedes,
+                    fecha_inicio_disponibilidad, cantidad_dias, disponible, valor_noche, tipo_propiedad_id, imagen, tipo_imagen) 
+                    VALUES (:domicilio, :localidad_id, :cantidad_habitaciones, :cantidad_banios, :cochera, :cantidad_huespedes, 
+                    :fecha_inicio_disponibilidad, :cantidad_dias, :disponible, :valor_noche, :tipo_propiedad_id, :imagen, :tipo_imagen)";
+            $consulta = $connection->prepare($sql);
+            $consulta->bindValue(":domicilio", $data['domicilio']);
+            $consulta->bindValue(":localidad_id", $data['localidad_id']);
+            $consulta->bindValue(":cantidad_habitaciones", $data['cantidad_habitaciones']?? null);
+            $consulta->bindValue(":cantidad_banios", $data['cantidad_banios']?? null);
+            $consulta->bindValue(":cochera", $data['cochera']?? null);
+            $consulta->bindValue(":cantidad_huespedes", $data['cantidad_huespedes']);
+            $consulta->bindValue(":fecha_inicio_disponibilidad", $data['fecha_inicio_disponibilidad']);
+            $consulta->bindValue(":cantidad_dias", $data['cantidad_dias']);
+            $consulta->bindValue(":disponible", $data['disponible']);
+            $consulta->bindValue(":valor_noche", $data['valor_noche']);
+            $consulta->bindValue(":tipo_propiedad_id", $data['tipo_propiedad_id']);
+            $consulta->bindValue(":imagen", $data['imagen']?? null);
+            $consulta->bindValue(":tipo_imagen", $data['tipo_imagen']?? null);
+            $consulta->execute();
+            /// En los campos que no son requeridos les asigno null para tener un valor que se pueda vincular a la consulta sql
+            $response->getBody()->write(json_encode(['Message'=> 'Propiedad Creada Correctamente']));
+            return $response->withStatus(200);
+        }
 
     }catch (PDOException $e){ 
         $response->getBody()->write(json_encode([
@@ -895,28 +900,31 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
                 $response->getBody()->write(json_encode([$error]));
                 return $response->withStatus(400);
             }
-
-            /// Editar Propiedad
-            $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id,
-                    cantidad_huespedes = :cantidad_huespedes, 
-                    fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad, cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
-                    tipo_propiedad_id = :tipo_propiedad_id WHERE id = '". $id ."'";
-            $consulta = $connection->prepare($sql);
-            $consulta->bindValue(":domicilio", $domicilio);
-            $consulta->bindValue(":localidad_id", $localidad_id);
-            $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
-            $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
-            $consulta->bindValue(":cantidad_dias", $cantidad_dias);
-            $consulta->bindValue(":disponible", $disponible);
-            $consulta->bindValue(":valor_noche", $valor_noche);
-            $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
-            $consulta->execute();
-            $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            else {
+                /// Editar Propiedad
+                $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id,
+                        cantidad_huespedes = :cantidad_huespedes, 
+                        fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad, cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
+                        tipo_propiedad_id = :tipo_propiedad_id WHERE id = '". $id ."'";
+                $consulta = $connection->prepare($sql);
+                $consulta->bindValue(":domicilio", $domicilio);
+                $consulta->bindValue(":localidad_id", $localidad_id);
+                $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
+                $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
+                $consulta->bindValue(":cantidad_dias", $cantidad_dias);
+                $consulta->bindValue(":disponible", $disponible);
+                $consulta->bindValue(":valor_noche", $valor_noche);
+                $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
+                $consulta->execute();
+                $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
+                $code=200;
+            }
             
-        }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad con el id: '. $id . ' no existe']));
-            return $response->withStatus(404);
+        }else{ 
+            $response->getBody()->write(json_encode(['error'=> 'La propiedad con el id: '. $id . ' no existe']));
+            $code=404;
         } 
+        return $response->withStatus($code);
     }catch(PDOException $e){
         $payload = json_encode([
             'status' => "Bad Request",
@@ -941,10 +949,12 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
             $query = $connection->query($sql);
             $query->fetch(PDO::FETCH_ASSOC);
             $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
-            return $response->withStatus(201);
-        }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
-            return $response->withStatus(404);
+            $code=200;
+        }else{ 
+            $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
+            $code=404;
         }  
+        return $response->withStatus($code);
 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -976,11 +986,11 @@ $app->get('/propiedades', function(Request $request, Response $response){
                     $primera = false; // Cambiar el estado para arrancar con los ANDs
                 }
                 $filtros .=  $campo." = '". $data[$campo] ."'";
-                //echo $sql. '<br>';
+                //echo $sql. '<br>'; //para probar code
                 $sql .= " $filtros";
             }
         } 
-       // echo 'Code final: '. $sql. '<br>';
+       // echo 'Code final: '. $sql. '<br>'; //para probar code
 
         if (empty($filtros)) {
             $query = $connection->query('SELECT * FROM propiedades ORDER BY id');
@@ -1026,11 +1036,13 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
         if ($consulto_id->rowCount()> 0){
             $propiedadesx = $consulto_id->fetch(PDO::FETCH_ASSOC);
             $response->getBody()->write(json_encode([$propiedadesx]));
-            return $response->withStatus(201);
+            $code=200;
 
-        }else{ $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
-                return $response->withStatus(404);
+        }else{ 
+            $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));   
+            $code=404;
          }  
+         return $response->withStatus($code);
 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1138,7 +1150,7 @@ $app->post('/reservas', function(Request $request, Response $response){
     }
 });
 
-// Editar Reserva(probado)
+// Editar Reserva(probado) (arreglo de code de errores distinto pide)
 $app->put('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $errores = [];
@@ -1256,18 +1268,19 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
                 $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
                 if ($fecha_actual>=date("Y-m-d ")) {
                     $response->getBody()->write(json_encode(['error'=> 'No se puede eliminar la reserva porque ya comenzo']));
-                    return $response->withStatus(400);
+                    $code=400;
                 }           
                 else{
                     $sql = "DELETE FROM reservas WHERE id = '". $id ."' ";
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'La reserva se elimino correctamente']));
-                    return $response->withStatus(201);
+                    $code=200;
                 }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con id: '.$id.' no existe']));
-                return $response->withStatus(404);
+               $code=404;
             }  
+            return $response->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
