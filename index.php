@@ -681,10 +681,10 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
         $consulto_id = $connection->query($sql);
         /// Verificar si existe el campo
          if ($consulto_id->rowCount()> 0){
-                $response->getBody()->write(json_encode(['message'=> 'El inquilino existe']));
+
                 $query = $connection->query($sql);
                 $inquilinox = $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode([$inquilinox]));
+                $response->getBody()->write(json_encode(['message'=> 'El inquilino existe: ']) . json_encode([$inquilinox]));
                 $code=200;
 
         }else{ 
