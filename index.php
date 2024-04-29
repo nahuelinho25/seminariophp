@@ -171,7 +171,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
 
 });
 
-// Eliminar Localidad (lo pide propiedad)
+// Eliminar Localidad
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -192,7 +192,7 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
-                    $code=204;
+                    $code=200;
                 }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
                 $code=404;
@@ -363,7 +363,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
 });
 
 
-// Eliminar Tipo de Propiedad (lo pide propiedad)
+// Eliminar Tipo de Propiedad
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{   
@@ -384,7 +384,7 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'El tipo de propiedad se elimino correctamente']));
-                    $code=204;
+                    $code=200;
                 }
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
@@ -638,7 +638,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
 
 });
 
-/// Eliminar Inquilino (lo pide reserva)
+/// Eliminar Inquilino
 $app->delete('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -659,7 +659,7 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'El inquilino se elimino correctamente']));
-                    $code=204;
+                    $code=200;
                 }
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
@@ -1022,7 +1022,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
 
 }); 
 
-/// Eliminar Propiedad (Lo pide reserva)
+/// Eliminar Propiedad
 $app->delete('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try{
@@ -1043,7 +1043,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
-                $code=204;
+                $code=200;
             }
         }else{ 
             $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
@@ -1387,7 +1387,7 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'La reserva se elimino correctamente']));
-                    $code=204;
+                    $code=200;
                 }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con id: '.$id.' no existe']));
                $code=404;
@@ -1437,4 +1437,3 @@ $app->get('/reservas', function(Request $request, Response $response){
 
 $app->run();
 
-//ningun eliminar en su forma correcta devuelte texto (exceptuando el de reserva)
