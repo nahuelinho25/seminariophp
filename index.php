@@ -1365,7 +1365,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
 
 });
 
-/// Eliminar Reserva (verificar si funciona el metodo de fecha)
+/// Eliminar Reserva
 $app->delete('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -1374,12 +1374,11 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
             $reservas_id = $connection->query($sql);
             /// Verificar si existe el id
             if ($reservas_id->rowCount() > 0){    
+                $fecha_actual=date("Y-m-d");
+                $query = $connection->query("SELECT `fecha_desde` FROM reservas WHERE id = '". $id ."'");
+                $consulta_fecha = $query->fetchColumn();
                 /// Verificar si fecha_desde es menor que la fecha actual
-                $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
-                $consulta_fecha = $connection->query($sql);
-                $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
-                
-                if ($fecha_actual>=date("Y-m-d ")) {
+                if ($fecha_actual >= $consulta_fecha) {
                     $response->getBody()->write(json_encode(['error'=> 'No se puede eliminar la reserva porque ya comenzo']));
                     $code=400;
                 }           
