@@ -157,7 +157,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             $consulta->bindValue(":nombre", $nombre);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            return $response->withStatus(200);
         } 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -207,7 +207,6 @@ $app->get('/localidades', function(Request $request, Response $response){
     try {
         $query = $connection->query('SELECT * FROM localidades ORDER BY id');
         $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
-
         $payload = json_encode([
             'status' => "success",
             'code' => 200,
@@ -338,7 +337,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             $consulta->bindValue(":nombre", $nombre);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            return $response->withStatus(200);
         }
     }catch(PDOException $e){
     $payload = json_encode([
@@ -601,7 +600,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             $consulta->bindValue(":activo", $activo);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El inquilino con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            return $response->withStatus(200);
         }
             
     }catch(PDOException $e){
@@ -973,7 +972,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            return $response->withStatus(200);
         }
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1304,7 +1303,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta->bindValue(":valor_total", $valor_total);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La reserva con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(201);
+            return $response->withStatus(200);
         }
     }catch(PDOException $e){
         $payload = json_encode([
