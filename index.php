@@ -170,29 +170,24 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-// Eliminar Localidad (hecho)
+// Eliminar Localidad (hecho) (lo pide propiedad)
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
-            $connection = getConnection();
-
-            
+            $connection = getConnection();            
             $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
             $consulto_id = $connection->query($sql);
-            
             /// Verificar si existe el id
-            if ($consulto_id->rowCount()> 0){
-                /// Verificar si el ID de localidad se usa en la tabla propiedad
-                
-                $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+            if ($consulto_id->rowCount() > 0){
+                $sql = "SELECT * FROM propiedades WHERE localidad_id = '". $id ."'";
                 $consulta_propiedad = $connection->query($sql);
-                
-                if($consulta_propiedad->rowCount() <= 0){
+                /// Verificar si el ID de localidad se usa en la tabla propiedad
+                if($consulta_propiedad->rowCount() > 0){
                     $response->getBody()->write(json_encode(['message'=> 'Esta localidad es utilizada por una propiedad']));
                     $code=400;
                 }
                 else{
-                    $sql = "DELETE FROM localidades WHERE id = '". $id ."' ";
+                    $sql = "DELETE FROM localidades WHERE id = '". $id ."' ";    
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
@@ -202,7 +197,6 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
                 $code=404;
             }  
             return $response->withStatus($code);
-            
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -210,9 +204,9 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
                 'code' => 400,
                 'message' => "Error al eliminar la localidad". $e->getMessage()
             ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
 // Listar Localidades
@@ -366,20 +360,29 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
 });
 
 
-// Eliminar Tipo de Propiedad (no tira respuesta) (lo pide propiedad)
+// Eliminar Tipo de Propiedad (hecho) (lo pide propiedad)
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
-        try{
+        try{   
             $connection = getConnection();
             $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."'";
             $consulto_id = $connection->query($sql);
             /// Verificar si existe el id
             if ($consulto_id->rowCount()> 0){
-                $sql = "DELETE FROM tipo_propiedades WHERE id = '". $id ."' ";
-                $query = $connection->query($sql);
-                $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode(['message'=> 'El tipo de propiedad se elimino correctamente']));
-                $code=204;
+                $sql = "SELECT * FROM propiedades WHERE tipo_propiedad_id = '". $id ."'";
+                $consulta_propiedad = $connection->query($sql);
+                /// Verificar si el ID de tipo propiedad se usa en la tabla propiedad
+                if($consulta_propiedad->rowCount() > 0){
+                    $response->getBody()->write(json_encode(['message'=> 'Este tipo propiedad es usado por una propiedad']));
+                    $code=400;
+                }
+                else{
+                    $sql = "DELETE FROM tipo_propiedades WHERE id = '". $id ."' ";
+                    $query = $connection->query($sql);
+                    $query->fetch(PDO::FETCH_ASSOC);
+                    $response->getBody()->write(json_encode(['message'=> 'El tipo de propiedad se elimino correctamente']));
+                    $code=204;
+                }
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
                 $code=404;
@@ -629,7 +632,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Eliminar Inquilino  (no tira respuesta) (lo pide reserva)
+/// Eliminar Inquilino  (hecho) (lo pide reserva)
 $app->delete('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -638,11 +641,20 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
             $consulto_id = $connection->query($sql);
             /// Verificar si existe el id
             if ($consulto_id->rowCount()> 0){
-                $sql = "DELETE FROM inquilinos WHERE id = '". $id ."' ";
-                $query = $connection->query($sql);
-                $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode(['message'=> 'El inquilino se elimino correctamente']));
-                $code=204;
+                $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $id ."'";
+                $consulta_reserva = $connection->query($sql);
+                /// Verificar si el ID de inquilino se usa en la tabla reserva
+                if($consulta_reserva->rowCount() > 0){
+                    $response->getBody()->write(json_encode(['message'=> 'Este inquilino es usado por una reserva']));
+                    $code=400;
+                }
+                else{
+                    $sql = "DELETE FROM inquilinos WHERE id = '". $id ."' ";
+                    $query = $connection->query($sql);
+                    $query->fetch(PDO::FETCH_ASSOC);
+                    $response->getBody()->write(json_encode(['message'=> 'El inquilino se elimino correctamente']));
+                    $code=204;
+                }
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
                 $code=404;
@@ -1000,7 +1012,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 }); 
 
-/// Eliminar Propiedad (no tira respuesta) (no deja editar ni 1 ni 2) (Lo pide reserva)
+/// Eliminar Propiedad (hecho) (Lo pide reserva)
 $app->delete('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try{
@@ -1008,12 +1020,21 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
         $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
         /// Verificar si existe el id
-        if ($consulto_id->rowCount()> 0){
-            $sql = "DELETE FROM propiedades WHERE id = '". $id ."' ";
-            $query = $connection->query($sql);
-            $query->fetch(PDO::FETCH_ASSOC);
-            $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
-            $code=204;
+        if ($consulto_id->rowCount() > 0){
+            $sql = "SELECT * FROM reservas WHERE propiedad_id = '". $id ."'";
+            $consulta_reserva = $connection->query($sql);
+            /// Verificar si el ID de propiedad se usa en la tabla reserva
+            if($consulta_reserva->rowCount() > 0){
+                $response->getBody()->write(json_encode(['message'=> 'Esta propiedad es usada por una reserva']));
+                $code=400;
+            }
+            else{
+                $sql = "DELETE FROM propiedades WHERE id = '". $id ."' ";
+                $query = $connection->query($sql);
+                $query->fetch(PDO::FETCH_ASSOC);
+                $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
+                $code=204;
+            }
         }else{ 
             $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
             $code=404;
@@ -1397,3 +1418,5 @@ $app->get('/reservas', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 $app->run();
+
+//ningun eliminar en su forma correcta devuelte texto (exceptuando el de reserva)
