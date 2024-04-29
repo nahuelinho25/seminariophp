@@ -170,24 +170,39 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-// Eliminar Localidad (no deja eliminar localidad 1)
+// Eliminar Localidad (hecho)
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
             $connection = getConnection();
+
+            
             $sql = "SELECT * FROM localidades WHERE id = '". $id ."'";
             $consulto_id = $connection->query($sql);
+            
             /// Verificar si existe el id
             if ($consulto_id->rowCount()> 0){
-                $sql = "DELETE FROM localidades WHERE id = '". $id ."' ";
-                $query = $connection->query($sql);
-                $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
-                $code=204;
+                /// Verificar si el ID de localidad se usa en la tabla propiedad
+                
+                $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+                $consulta_propiedad = $connection->query($sql);
+                
+                if($consulta_propiedad->rowCount() <= 0){
+                    $response->getBody()->write(json_encode(['message'=> 'Esta localidad es utilizada por una propiedad']));
+                    $code=400;
+                }
+                else{
+                    $sql = "DELETE FROM localidades WHERE id = '". $id ."' ";
+                    $query = $connection->query($sql);
+                    $query->fetch(PDO::FETCH_ASSOC);
+                    $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
+                    $code=204;
+                }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
                 $code=404;
             }  
             return $response->withStatus($code);
+            
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -351,7 +366,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
 });
 
 
-// Eliminar Tipo de Propiedad
+// Eliminar Tipo de Propiedad (no tira respuesta) (lo pide propiedad)
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -614,7 +629,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Eliminar Inquilino
+/// Eliminar Inquilino  (no tira respuesta) (lo pide reserva)
 $app->delete('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -985,7 +1000,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 }); 
 
-/// Eliminar Propiedad
+/// Eliminar Propiedad (no tira respuesta) (no deja editar ni 1 ni 2) (Lo pide reserva)
 $app->delete('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try{
@@ -1016,7 +1031,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Listar Propiedades 
+/// Listar Propiedades (feo esteticamente)
 $app->get('/propiedades', function(Request $request, Response $response){
     $connection = getConnection();
     $data = $request->getParsedBody();
@@ -1074,7 +1089,7 @@ $app->get('/propiedades', function(Request $request, Response $response){
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Ver Propiedad
+/// Ver Propiedad (feo esteticamente)
 $app->get('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try {
@@ -1316,7 +1331,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Eliminar Reserva 
+/// Eliminar Reserva (verificar si funciona el metodo de fecha)
 $app->delete('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
