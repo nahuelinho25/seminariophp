@@ -170,7 +170,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-// Eliminar Localidad
+// Eliminar Localidad (no deja eliminar localidad 1)
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -183,7 +183,7 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'La localidad se elimino correctamente']));
-                $code=201;
+                $code=204;
             }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
                 $code=404;
             }  
@@ -365,7 +365,7 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'El tipo de propiedad se elimino correctamente']));
-                $code=200;
+                $code=204;
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
                 $code=404;
@@ -628,7 +628,7 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
                 $query = $connection->query($sql);
                 $query->fetch(PDO::FETCH_ASSOC);
                 $response->getBody()->write(json_encode(['message'=> 'El inquilino se elimino correctamente']));
-                $code=200;
+                $code=204;
             }else{ 
                 $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
                 $code=404;
@@ -999,7 +999,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
             $query = $connection->query($sql);
             $query->fetch(PDO::FETCH_ASSOC);
             $response->getBody()->write(json_encode(['message'=> 'La propiedad se elimino correctamente']));
-            $code=200;
+            $code=204;
         }else{ 
             $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
             $code=404;
@@ -1339,7 +1339,7 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
                     $query = $connection->query($sql);
                     $query->fetch(PDO::FETCH_ASSOC);
                     $response->getBody()->write(json_encode(['message'=> 'La reserva se elimino correctamente']));
-                    $code=200;
+                    $code=204;
                 }
             }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con id: '.$id.' no existe']));
                $code=404;
