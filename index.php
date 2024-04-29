@@ -165,9 +165,10 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             'code' => 400,
             'message' => "Error al editar la localidad". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 // Eliminar Localidad (hecho) (lo pide propiedad)
@@ -228,10 +229,9 @@ $app->get('/localidades', function(Request $request, Response $response){
             'code' => 400,
             'message' => "Error al listar las localidades ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
 // ================================[ TIPO PROPIEDAD ]=========================================
@@ -354,9 +354,10 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             'code' => 400,
             'message' => "Error al editar el tipo de propiedad". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 
@@ -396,9 +397,10 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
                 'code' => 400,
                 'message' => "Error al eliminar el tipo de propiedad". $e->getMessage()
             ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 // Listar Tipo de Propiedad
@@ -419,10 +421,9 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
             'code' => 400,
             'message' => "Error al listar las propiedades ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
 // ================================[ INQUILINOS ]=========================================
@@ -517,7 +518,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
             return $response->withStatus(201);
         }
     }catch (PDOException $e){ 
-    $response->getBody()->write(json_encode([
+        $response->getBody()->write(json_encode([
         'status' => "Bad Request",
         'message' => "Error al crear el inquilino". $e->getMessage()]));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
@@ -627,9 +628,10 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             'code' => 400,
             'message' => "Error al editar el inquilino". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 /// Eliminar Inquilino  (hecho) (lo pide reserva)
@@ -667,9 +669,10 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
                 'code' => 400,
                 'message' => "Error al eliminar el inquilino". $e->getMessage()
             ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 /// Listar Inquilinos
@@ -693,7 +696,6 @@ $app->get('/inquilinos', function(Request $request, Response $response){
             'message' => "Error al listar los inquilino ". $e->getMessage()
         ]);
     }
-
     $response->getBody()->write($payload);
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
@@ -725,9 +727,9 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
             'code' => 400,
             'message' => "Error al mostrar los datos del inquilino ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
 /// Historial de reservas de un inquilino
@@ -779,9 +781,10 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
             'code' => 400,
             'message' => "Error al mostrar historial de reservas del inquilino ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 // ================================[ PROPIEDADES ]=========================================
@@ -1007,9 +1010,10 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             'code' => 400,
             'message' => "Error al editar la propiedad". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 }); 
 
 /// Eliminar Propiedad (hecho) (Lo pide reserva)
@@ -1047,9 +1051,10 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
             'code' => 400,
             'message' => "Error al eliminar la propiedad". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 /// Listar Propiedades (feo esteticamente)
@@ -1104,10 +1109,9 @@ $app->get('/propiedades', function(Request $request, Response $response){
             'code' => 400,
             'message' => "Error al listar las propiedades ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
 /// Ver Propiedad (feo esteticamente)
@@ -1135,9 +1139,10 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
             'code' => 400,
             'message' => "Error al obtener los datos de la propiedad". $e->getMessage()
         ]);
-    }
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+
 });
 
 // ================================[ RESERVAS ]=========================================
@@ -1347,9 +1352,10 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             'code' => 400,
             'message' => "Error al editar la reserva". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 /// Eliminar Reserva (verificar si funciona el metodo de fecha)
@@ -1387,9 +1393,10 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
                 'code' => 400,
                 'message' => "Error al eliminar la reserva". $e->getMessage()
             ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
-        $response->getBody()->write($payload);
-        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
 
 /// Listar Reservas
@@ -1412,11 +1419,13 @@ $app->get('/reservas', function(Request $request, Response $response){
             'code' => 400,
             'message' => "Error al listar las reservas ". $e->getMessage()
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
 
-    $response->getBody()->write($payload);
-    return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+
 });
+
 $app->run();
 
 //ningun eliminar en su forma correcta devuelte texto (exceptuando el de reserva)
