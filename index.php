@@ -1272,7 +1272,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
         if (isset($data['fecha_desde'])) {
             $fecha_desde = $data['fecha_desde'];
             $formato_correcto = 'Y-m-d'; // Define aquí el formato que esperas para la fecha
-        
+
             $fecha_obj = DateTime::createFromFormat($formato_correcto, $fecha_desde);
             if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha_desde) {
                 // La fecha no tiene el formato correcto
@@ -1303,13 +1303,14 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             } 
 
             /// Verificar si fecha_desde es menor que la fecha actual
-            if (isset($data['fecha_desde'])) {
-                $fecha_actual=date("Y-m-d");
-                if ($fecha_actual >= $fecha_desde) {
-                    $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
-                    $codeerro['comenzo'] = 404;
-                }
+            $fecha_actual=date("Y-m-d");
+            $query = $connection->query("SELECT `fecha_desde` FROM reservas WHERE id = '". $id ."'");
+            $consulta_fecha = $query->fetchColumn();
+            if ($fecha_actual >= $consulta_fecha) {
+                $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
+                $codeerro['comenzo'] = 404;
             }
+            
         }
         // Verificar si la reserva existe
         $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
@@ -1372,11 +1373,12 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
             $sql = "SELECT * FROM reservas WHERE id = '". $id ."'";
             $reservas_id = $connection->query($sql);
             /// Verificar si existe el id
-            if ($reservas_id->rowCount()> 0){    
+            if ($reservas_id->rowCount() > 0){    
                 /// Verificar si fecha_desde es menor que la fecha actual
                 $sql = "SELECT fecha_desde FROM reservas WHERE id = '". $id ."'";
                 $consulta_fecha = $connection->query($sql);
                 $fecha_actual= $consulta_fecha->fetch(PDO::FETCH_ASSOC);
+                
                 if ($fecha_actual>=date("Y-m-d ")) {
                     $response->getBody()->write(json_encode(['error'=> 'No se puede eliminar la reserva porque ya comenzo']));
                     $code=400;
