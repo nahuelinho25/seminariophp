@@ -139,7 +139,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount()  <= 0){
             $errores['id']= 'La localidad con el id: '. $id . ' no existe';
-            $codeerro['id'] = 400;
+            $codeerro['id'] = 404;
         }
         /// Mostrar todos los errores
         if (!empty($errores)){
@@ -330,7 +330,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount() <=0){
             $errores['id']= 'El tipo de propiedad con el id: '. $id . ' no existe';
-            $codeerro['id'] = 400;
+            $codeerro['id'] = 404;
         }    
         /// Mostrar todos los errores
         if (!empty($errores)){
@@ -464,7 +464,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
             /// Verificar si el campo 'correo' tiene un formato valido
             if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
                 $errores['email_formato'] = 'El campo email tiene un formato no valido';
-                $codeerro['email_formato'] = 404;
+                $codeerro['email_formato'] = 400;
             }else{
                 $sql2 = "SELECT * FROM inquilinos WHERE email = '". $email ."'";
                 $email_repetido = $connection->query($sql2);
@@ -479,7 +479,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
         /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
         if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){ 
             $errores['activo_formato'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
-            $codeerro['activo_formato'] = 404;
+            $codeerro['activo_formato'] = 400;
         }
 
         /// Verificaciones campo 'documeto '
@@ -561,7 +561,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             /// Verificar si el campo 'correo' tiene un formato valido
             if (isset($data['email']) && !filter_var($data['email'], FILTER_VALIDATE_EMAIL)){
                 $errores['email_formato'] = 'El campo email tiene un formato no valido';
-                $codeerro['email_formato'] = 404;
+                $codeerro['email_formato'] = 400;
             }else{   
                 $sql2 ="SELECT * FROM inquilinos WHERE email = '". $email ."' AND id != '". $id ."'";
                 $consulta_repetido_email = $connection->query($sql2);
@@ -576,7 +576,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
         /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
         if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){ 
             $errores['activo'] = 'El campo activo debe ser 1 (true) o 0 (false)';       
-            $codeerro['activo_formato'] = 404;
+            $codeerro['activo_formato'] = 400;
         }
 
         /// Verificaciones campo 'documeto '
@@ -596,7 +596,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount()<= 0){
             $errores['inquilino_existe'] = 'El inquilino con el id: '. $id . ' no existe';
-            $codeerro['inquilino_existe'] = 400;
+            $codeerro['inquilino_existe'] = 404;
         }
         
         /// Mostrar todos los errores
@@ -816,7 +816,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
         /// Verificar si el campo 'activo' recibe 1(true) o 0 (false)
         if(isset($data['activo']) && $data['activo'] !== '1' && $data['activo']!== '0' ){
             $errores['activo_formato'] = 'El campo activo debe ser 1 (true) o 0 (false)';          
-            $codeerro['activo_formato'] = 404;
+            $codeerro['activo_formato'] = 400;
         }
 
         // Verificar si la fecha tiene un formato correcto
@@ -828,7 +828,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
             if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha_inicio_disponibilidad) {
                 // La fecha no tiene el formato correcto
                 $errores['fecha_formato'] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-                $codeerro['fecha_formato'] = 404;
+                $codeerro['fecha_formato'] = 400;
             }
         }
         /// Verificaciones campo 'domicilio, localidad_id,tipo_propiedad_id'
@@ -850,7 +850,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
             $consulta_localidad = $connection->query($sql);
             if($consulta_localidad->rowCount() == 0){
                 $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
-                $codeerro['localidad_existe'] = 400;
+                $codeerro['localidad_existe'] = 404;
             }
 
             /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
@@ -858,7 +858,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
             $consulta_tipo_propiedades = $connection->query($sql);
             if($consulta_tipo_propiedades->rowCount() == 0){
                 $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
-                $codeerro['tipo_propiedad_existe'] = 400;
+                $codeerro['tipo_propiedad_existe'] = 404;
             }
         }
         /// Mostrar todos los errores
@@ -935,7 +935,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha_inicio_disponibilidad) {
                 // La fecha no tiene el formato correcto
                 $errores['fecha_formato'] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-                $codeerro['fecha_formato'] = 404;
+                $codeerro['fecha_formato'] = 400;
             }
         }  
 
@@ -958,7 +958,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $consulta_localidad = $connection->query($sql);
             if($consulta_localidad->rowCount() == 0){
                 $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
-                $codeerro['localidad_existe'] = 400;
+                $codeerro['localidad_existe'] = 404;
             }
 
             /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
@@ -966,7 +966,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $consulta_tipo_propiedades = $connection->query($sql);
             if($consulta_tipo_propiedades->rowCount() == 0){
                 $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
-                $codeerro['tipo_propiedad_existe'] = 400;
+                $codeerro['tipo_propiedad_existe'] = 404;
             }
         }
 
@@ -975,7 +975,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount() <= 0){ 
             $errores['propiedad_existe'] = 'La propiedad con el id: '. $id . ' no existe';
-            $codeerro['propiedad_existe'] = 400;
+            $codeerro['propiedad_existe'] = 404;
         }
 
         /// Mostrar todos los errores
@@ -1179,7 +1179,7 @@ $app->post('/reservas', function(Request $request, Response $response){
             if ($fecha_obj === false || $fecha_obj->format($formato_correcto) !== $fecha_desde) {
                 // La fecha no tiene el formato correcto
                 $errores['fecha_formato'] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
-                $codeerro['fecha_formato'] = 404;
+                $codeerro['fecha_formato'] = 400;
             }
         }
         /// Verificaciones campo 'propiedad_id, inquilino_id
@@ -1198,14 +1198,14 @@ $app->post('/reservas', function(Request $request, Response $response){
             $propiedad_disponible = $connection->query($sql);
             if($propiedad_disponible->rowCount() == 0){
                 $errores['propiedad_disponible'] = 'La propiedad con id: '.$propiedad_id.' no esta disponible o no existe';
-                $codeerro['propiedad_disponible'] = 400;
+                $codeerro['propiedad_disponible'] = 404;
             }
 
             $sql = "SELECT activo FROM inquilinos WHERE id = '". $inquilino_id ."' AND activo = 1 ";
             $inquilno_activo = $connection->query($sql);
             if($inquilno_activo->rowCount() == 0){
                 $errores['inquilino_activo']= 'El inquilino con id: '.$inquilino_id.' no esta activo o no existe';
-                $codeerro['inquilino_activo'] = 400;
+                $codeerro['inquilino_activo'] = 404;
             }
         }
 
@@ -1291,7 +1291,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta_inquilino = $connection->query($sql);
             if($consulta_inquilino->rowCount() == 0){
                 $errores['inquilino_existe'] = 'El ID '.$inquilino_id.' no existe en la tabla de inquilinos';
-                $codeerro['inquilino_existe'] = 400;
+                $codeerro['inquilino_existe'] = 404;
             } 
 
             /// Verificar si el ID de propiedad existe en la tabla de propiedad
@@ -1299,7 +1299,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta_propiedad = $connection->query($sql);
             if($consulta_propiedad->rowCount() == 0){
                 $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
-                $codeerro['propiedad_existe'] = 400;
+                $codeerro['propiedad_existe'] = 404;
             } 
 
             /// Verificar si fecha_desde es menor que la fecha actual
@@ -1308,7 +1308,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta_fecha = $query->fetchColumn();
             if ($fecha_actual >= $consulta_fecha) {
                 $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
-                $codeerro['comenzo'] = 404;
+                $codeerro['comenzo'] = 400;
             }
             
         }
@@ -1317,7 +1317,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
         $consulto_id = $connection->query($sql);
         if ($consulto_id->rowCount() <= 0){ 
             $errores['reserva_existe'] = 'La reserva con el id: '. $id . ' no existe';
-            $codeerro['reserva_existe'] = 400;
+            $codeerro['reserva_existe'] = 404;
         }
 
         /// Mostrar todos los errores
