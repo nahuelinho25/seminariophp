@@ -171,7 +171,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
 
 });
 
-// Eliminar Localidad (hecho) (lo pide propiedad)
+// Eliminar Localidad (lo pide propiedad)
 $app->delete('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -222,6 +222,8 @@ $app->get('/localidades', function(Request $request, Response $response){
             'code' => 200,
             'data' => $localidades
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         
     } catch (PDOException $e){
         $payload = json_encode ([
@@ -361,7 +363,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
 });
 
 
-// Eliminar Tipo de Propiedad (hecho) (lo pide propiedad)
+// Eliminar Tipo de Propiedad (lo pide propiedad)
 $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{   
@@ -414,6 +416,8 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
             'code' => 200,
             'data' => $tipos,
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         
     } catch (PDOException $e){
         $payload = json_encode ([
@@ -634,7 +638,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
 
 });
 
-/// Eliminar Inquilino  (hecho) (lo pide reserva)
+/// Eliminar Inquilino (lo pide reserva)
 $app->delete('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
         try{
@@ -688,6 +692,8 @@ $app->get('/inquilinos', function(Request $request, Response $response){
             'code' => 200,
             'data' => $inquilinos
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         
     } catch (PDOException $e){
         $payload = json_encode ([
@@ -1016,7 +1022,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
 
 }); 
 
-/// Eliminar Propiedad (hecho) (Lo pide reserva)
+/// Eliminar Propiedad (Lo pide reserva)
 $app->delete('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     try{
@@ -1412,6 +1418,8 @@ $app->get('/reservas', function(Request $request, Response $response){
             'code' => 200,
             'data' => $reservas
         ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         
     } catch (PDOException $e){
         $payload = json_encode ([
