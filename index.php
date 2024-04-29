@@ -43,7 +43,7 @@ function getConnection(){
 
 //================================[ LOCALIDAD ]=========================================
 
-// Crear localidad(PROBADO)
+// Crear localidad
 $app->post('/localidades',function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -104,7 +104,7 @@ $app->post('/localidades',function(Request $request, Response $response){
     }
 });
 
-// Editar Localidad(PROBADO)
+// Editar Localidad
 $app->put('/localidades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
@@ -228,7 +228,7 @@ $app->get('/localidades', function(Request $request, Response $response){
 
 // ================================[ TIPO PROPIEDAD ]=========================================
 
-// Crear Tipo de Propiedad (PROBADO)
+// Crear Tipo de Propiedad 
 $app->post('/tipos_propiedad', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -286,7 +286,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
     }
 });
 
-// Editar Tipo de propiedad (PROBADO)
+// Editar Tipo de propiedad 
 $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
     $data = $request->getParsedBody();
     $id = $args['id'];
@@ -410,7 +410,7 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
 
 // ================================[ INQUILINOS ]=========================================
 
-/// Crear Inquilino (PROBADO)
+/// Crear Inquilino 
 $app->post('/inquilinos', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -507,7 +507,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
     }
 });
 
-// Editar Inquilino (PROBADO)
+// Editar Inquilino 
 $app->put('/inquilinos/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
@@ -704,7 +704,7 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Historial de reservas de un inquilino (PROBADO)
+/// Historial de reservas de un inquilino
 $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Response $response, $args){
     $idInquilino = $args['idInquilino'];
     try{
@@ -738,7 +738,7 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
             }
             else {
                 $response->getBody()->write(json_encode($mostrar));
-                $code=201;
+                $code=200;
             }
         
         }else{
@@ -760,7 +760,7 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
 
 // ================================[ PROPIEDADES ]=========================================
 
-/// Crear Propiedad(probado)
+/// Crear Propiedad
 $app->post('/propiedades', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -873,7 +873,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
     }
 });
 
-// Editar Propiedad(probado)
+// Editar Propiedad
 $app->put('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $data = $request->getParsedBody();
@@ -1017,7 +1017,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
     return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
 });
 
-/// Listar Propiedades (PROBADO)
+/// Listar Propiedades 
 $app->get('/propiedades', function(Request $request, Response $response){
     $connection = getConnection();
     $data = $request->getParsedBody();
@@ -1107,7 +1107,7 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
 
 // ================================[ RESERVAS ]=========================================
 
-/// Crear Reserva(probado)
+/// Crear Reserva
 $app->post('/reservas', function(Request $request, Response $response){
     $data = $request->getParsedBody();
     $errores = [];
@@ -1205,7 +1205,7 @@ $app->post('/reservas', function(Request $request, Response $response){
     }
 });
 
-// Editar Reserva(probado) (arreglo de code de errores distinto pide)
+// Editar Reserva
 $app->put('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $errores = [];
