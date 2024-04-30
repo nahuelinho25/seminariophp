@@ -76,12 +76,13 @@ $app->post('/localidades',function(Request $request, Response $response){
 
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+        $payload = json_encode([
+            'status' => "error",
+            'code' => 400,
+            'data' => $errores
+        ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
 
         // Agrega la localidad
@@ -143,13 +144,14 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
         }
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
-        }             
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
+        }    
         // Edita la localidad
         else {
             $sql = "UPDATE localidades SET nombre = :nombre WHERE id =  '". $id ."'";
@@ -269,12 +271,13 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
         }
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         /// Agrego el tipo de propiedad
         else {
@@ -334,12 +337,13 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
         }    
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         // Edito el tipo de propiedad
         else{
@@ -496,12 +500,13 @@ $app->post('/inquilinos', function(Request $request, Response $response){
 
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         else{
             $activo = $data['activo'];
@@ -601,12 +606,13 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
         
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         else{
             $activo = $data['activo'];
@@ -854,12 +860,13 @@ $app->post('/propiedades', function(Request $request, Response $response){
         }
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         else{
             $cantidad_huespedes = $data['cantidad_huespedes'];
@@ -971,12 +978,13 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
 
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         else {
             $cantidad_huespedes = $data['cantidad_huespedes'];
@@ -1186,15 +1194,16 @@ $app->post('/reservas', function(Request $request, Response $response){
             }
         }
 
-       /// Mostrar todos los errores
-       if (!empty($errores)){
-        $error = "Errores: <br>";
-        foreach($errores as $campo =>$value){
-            $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
+        /// Mostrar todos los errores
+        if (!empty($errores)){
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
-        $response->getBody()->write(json_encode([$error]));
-        return $response->withStatus($codeerro[$campo]);
-    }
         else{
             $cantidad_noches = $data['cantidad_noches'];
             /// Obtener el valor de la noche en una propiedad
@@ -1299,12 +1308,13 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
 
         /// Mostrar todos los errores
         if (!empty($errores)){
-            $error = "Errores: <br>";
-            foreach($errores as $campo =>$value){
-                $error .= $value . '<br>'; // Agrega un salto de línea después de cada error
-            }
-            $response->getBody()->write(json_encode([$error]));
-            return $response->withStatus($codeerro[$campo]);
+            $payload = json_encode([
+                'status' => "error",
+                'code' => 400,
+                'data' => $errores
+            ]);
+            $response->getBody()->write($payload);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
         }
         else{
             $cantidad_noches = $data['cantidad_noches'];
