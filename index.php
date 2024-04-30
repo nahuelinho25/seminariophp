@@ -777,7 +777,7 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
         
         }else{
             $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $idInquilino . ' no existe']));
-            $code=404;
+            $code=400;
         }
         return $response->withStatus($code);
 
@@ -1064,51 +1064,31 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
 });
 
 /// Listar Propiedades
-$app->get('/propiedades', function(Request $request, Response $response){
-    $connection = getConnection();
-    $data = $request->getParsedBody();
+$app->get('/propiedades', function(Request $request, Response $response) {
+    $data = $request->getParsedBody(); //deberia recibir por url los valores, pero lo hable recien con vero, no llego a implementarlo.
     try {
-
-        $campofiltros =['localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'disponible'];
-        $sql= "SELECT * FROM propiedades WHERE";
-        $primera = true; 
+        $connection = getConnection();
+        $campofiltros =['localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'disponible']; //enviar fecha_inicio_disponibilidad con formato fecha
+        $sql= "SELECT * FROM propiedades WHERE 1=1";
         // Compruebo filtros activos
         foreach($campofiltros as $campo){
             if(isset($data[$campo])){
-                $filtros = "";
-                if (!$primera) {
-                    $filtros .= " AND "; // Agregar AND si no es la primera vez que se agrega un filtro
-                } else {
-                    $primera = false; // Cambiar el estado para arrancar con los ANDs
-                }
-                $filtros .=  $campo." = '". $data[$campo] ."'";
+                $filtros =  " AND ". $campo." = '". $data[$campo] ."'";
                 //echo $sql. '<br>'; //para probar code
                 $sql .= " $filtros";
             }
         } 
        // echo 'Code final: '. $sql. '<br>'; //para probar code
-
-        if (empty($filtros)) {
-            $query = $connection->query('SELECT * FROM propiedades ORDER BY id');
-            $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
-
-            $response->getBody()->write(json_encode($propiedades));
-            $code= 200;
-        }
-        else{
-            $query = $connection->query($sql);
-            $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
-            if (empty($propiedades)) {
-                $response->getBody()->write(json_encode('No hay propiedades que cumplan estos filtros'));
-                $code= 400;
-            }
-            else{
-            $response->getBody()->write(json_encode($propiedades));
-            $code= 200;
-            }
-        }
-        return $response->withStatus($code);
-        
+        $query = $connection->query($sql);
+        $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
+        $payload = json_encode([
+            'status' => "success",
+            'code' => 200,
+            'data' => $propiedades
+        ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+               
     } catch (PDOException $e){
         $payload = json_encode ([
             'status' => "Bad Request",
@@ -1436,4 +1416,3 @@ $app->get('/reservas', function(Request $request, Response $response){
 });
 
 $app->run();
-
