@@ -1240,14 +1240,6 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             if($consulta_propiedad->rowCount() == 0){
                 $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
             } 
-
-            /// Verificar si fecha_desde es menor que la fecha actual
-            $fecha_actual=date("Y-m-d");
-            $query = $connection->query("SELECT `fecha_desde` FROM reservas WHERE id = '". $id ."'");
-            $consulta_fecha = $query->fetchColumn();
-            if ($fecha_actual >= $consulta_fecha) {
-                $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
-            }
             
         }
         // Verificar si la reserva existe
@@ -1256,6 +1248,15 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
         if ($consulto_id->rowCount() <= 0){ 
             $errores['reserva_existe'] = 'La reserva con el id: '. $id . ' no existe';
             $codeerro = 404;
+        }
+        else{
+            /// Verificar si fecha_desde es menor que la fecha actual
+            $fecha_actual=date("Y-m-d");
+            $query = $connection->query("SELECT `fecha_desde` FROM reservas WHERE id = '". $id ."'");
+            $consulta_fecha = $query->fetchColumn();
+            if ($fecha_actual >= $consulta_fecha) {
+                $errores['comenzo'] = 'No se puede editar la reserva porque ya comenzo';
+            }
         }
 
         /// Mostrar todos los errores
