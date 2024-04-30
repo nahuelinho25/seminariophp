@@ -215,7 +215,7 @@ $app->get('/localidades', function(Request $request, Response $response){
     $connection = getConnection();
 
     try {
-        $query = $connection->query('SELECT * FROM localidades ORDER BY id');
+        $query = $connection->query('SELECT * FROM localidades');
         $localidades = $query->fetchAll(PDO::FETCH_ASSOC);
         $payload = json_encode([
             'status' => "success",
@@ -684,7 +684,7 @@ $app->get('/inquilinos', function(Request $request, Response $response){
     $connection = getConnection();
 
     try {
-        $query = $connection->query('SELECT * FROM inquilinos ORDER BY id');
+        $query = $connection->query('SELECT * FROM inquilinos');
         $inquilinos = $query->fetchAll(PDO::FETCH_ASSOC);
 
         $payload = json_encode([
@@ -715,17 +715,21 @@ $app->get('/inquilinos/{id}', function(Request $request, Response $response, $ar
         $consulto_id = $connection->query($sql);
         /// Verificar si existe el campo
          if ($consulto_id->rowCount()> 0){
-
                 $query = $connection->query($sql);
                 $inquilinox = $query->fetch(PDO::FETCH_ASSOC);
-                $response->getBody()->write(json_encode(['message'=> 'El inquilino existe: ']) . json_encode([$inquilinox]));
+                $payload = json_encode([
+                    'status' => "success",
+                    'code' => 200,
+                    'data' => $inquilinox
+                ]);
+                $response->getBody()->write($payload);
                 $code=200;
 
         }else{ 
             $response->getBody()->write(json_encode(['error'=> 'El inquilino con id: '.$id.' no existe']));
             $code=404;
          }  
-         return $response->withStatus($code);
+         return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
     }catch (PDOException $e){
         $payload = json_encode ([
@@ -752,34 +756,21 @@ $app->get('/inquilinos/{idInquilino}/reservas', function(Request $request, Respo
             WHERE reservas.inquilino_id = '" .$idInquilino. "'";
             $consulta_reservas = $connection->query($sql);
             $reservas = $consulta_reservas->fetchAll(PDO::FETCH_ASSOC);
-
-            /// Limpiar campos null y volver mas estetico
-            $mostrar='';
-            $num= 0;
-            foreach($reservas as $reserva){
-                $num++;
-                $mostrar .= '--- Reserva: '. $num .' ---' . '<br>';
-                foreach($reserva as $campo => $valor){
-                    if ($valor != null) $mostrar .= '<br>' .$campo . ':'. $valor . '<br>';
-                }
-                $mostrar .= '<br>';
-            }
-            
-            // Verificar si el inquilino tiene reservas
-            if (!$reservas){
-                $response->getBody()->write(json_encode(['message'=> 'El inquilino no tiene reservas']));
-                $code=400;
-            }
-            else {
-                $response->getBody()->write(json_encode($mostrar));
-                $code=200;
-            }
-        
+            //Muestro  historial
+                $code=200;        
+                $payload = json_encode([
+                    'status' => "success",
+                    'code' => 200,
+                    'message' => 'El inquilino no tiene reservas',
+                    'data' => $reservas
+                    
+                ]);
+                $response->getBody()->write($payload);
         }else{
             $response->getBody()->write(json_encode(['error'=> 'El inquilino con el id: '. $idInquilino . ' no existe']));
             $code=400;
         }
-        return $response->withStatus($code);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
     }catch (PDOException $e){
         $payload = json_encode ([
@@ -1078,7 +1069,7 @@ $app->get('/propiedades', function(Request $request, Response $response) {
                 $sql .= " $filtros";
             }
         } 
-       // echo 'Code final: '. $sql. '<br>'; //para probar code
+
         $query = $connection->query($sql);
         $propiedades = $query->fetchAll(PDO::FETCH_ASSOC);
         $payload = json_encode([
@@ -1110,14 +1101,20 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
         /// Verificar si existe el campo
         if ($consulto_id->rowCount()> 0){
             $propiedadesx = $consulto_id->fetch(PDO::FETCH_ASSOC);
-            $response->getBody()->write(json_encode([$propiedadesx]));
+            $payload = json_encode([
+                'status' => "success",
+                'code' => 200,
+                'data' => $propiedadesx
+            ]);
+            $response->getBody()->write($payload);
             $code=200;
+
 
         }else{ 
             $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));   
             $code=404;
          }  
-         return $response->withStatus($code);
+         return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1391,7 +1388,7 @@ $app->get('/reservas', function(Request $request, Response $response){
     $connection = getConnection();
 
     try {
-        $query = $connection->query('SELECT * FROM reservas ORDER BY id');
+        $query = $connection->query('SELECT * FROM reservas');
         $reservas = $query->fetchAll(PDO::FETCH_ASSOC);
 
         $payload = json_encode([
