@@ -1027,7 +1027,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
 
 /// Listar Propiedades
 $app->get('/propiedades', function(Request $request, Response $response) {
-    $data = $request->getParsedBody(); //deberia recibir por url los valores, pero lo hable recien con vero, no llego a implementarlo.
+    $data = $request->getQueryParams(); //deberia recibir por url los valores, pero lo hable recien con vero, no llego a implementarlo.
     try {
         $connection = getConnection();
         $campofiltros =['localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'disponible']; //enviar fecha_inicio_disponibilidad con formato fecha
@@ -1194,7 +1194,7 @@ $app->post('/reservas', function(Request $request, Response $response){
     }
 });
 
-// Editar Reserva
+// Editar Reserva 
 $app->put('/reservas/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
     $errores = [];
@@ -1240,6 +1240,25 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             if($consulta_propiedad->rowCount() == 0){
                 $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
             } 
+            /// Verificar si el inquilino ya tiene una reserva en la misma propiedad
+            $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."'";
+            $consulta_reserva_existente = $connection->query($sql);
+            if ($consulta_reserva_existente->rowCount() > 0){
+                $errores['inquilino_reserva'] = 'El inquilino ya tiene una reserva en esta propiedad';
+            }
+            /// Verificar si la propiedad esta disponible y el inquilino esta activo
+            $sql = "SELECT disponible FROM propiedades WHERE id = '". $propiedad_id ."' AND disponible = 1 ";
+            $propiedad_disponible = $connection->query($sql);
+            if($propiedad_disponible->rowCount() == 0){
+                $errores['propiedad_disponible'] = 'La propiedad con id: '.$propiedad_id.' no esta disponible o no existe';
+            }
+
+            $sql = "SELECT activo FROM inquilinos WHERE id = '". $inquilino_id ."' AND activo = 1 ";
+            $inquilno_activo = $connection->query($sql);
+            if($inquilno_activo->rowCount() == 0){
+                $errores['inquilino_activo']= 'El inquilino con id: '.$inquilino_id.' no esta activo o no existe';
+            }
+
             
         }
         // Verificar si la reserva existe
