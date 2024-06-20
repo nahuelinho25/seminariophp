@@ -8,21 +8,21 @@ require __DIR__ . '/vendor/autoload.php';
 
 $app = AppFactory::create();
 $app->addRoutingMiddleware();
-$app->addErrorMiddleware(true, true, true);
-$app->add( function ($request, $handler) {
+
+$app->add(function (Request $request, $handler) {
     $response = $handler->handle($request);
 
-    return $response
-        ->withHeader('Access-Control-Allow-Origin', '*')
+    // Permitir acceso desde cualquier origen
+    $response = $response
+        ->withHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
         ->withHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Accept, Origin, Authorization')
-        ->withHeader('Access-Control-Allow-Methods', 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
-        ->withHeader('Content-Type', 'application/json')
-    ;
+        ->withHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+
+    return $response;
 });
 
-$app = AppFactory::create();
+$app->addErrorMiddleware(true, true, true);
 $app->addBodyParsingMiddleware();
-$app->addErrorMiddleware(true,true,true);
 
 
 // Conexion a la base de datos
@@ -153,7 +153,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             $consulta->bindValue(":nombre", $nombre);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La localidad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(200);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         } 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -193,7 +193,7 @@ $app->delete('/localidades/{id}', function(Request $request, Response $response,
             }else{ $response->getBody()->write(json_encode(['error'=> 'La localidad a eliminar no existe']));
                 $code=404;
             }  
-            return $response->withStatus($code);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -339,7 +339,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             $consulta->bindValue(":nombre", $nombre);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El tipo de propiedad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(200);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         }
     }catch(PDOException $e){
     $payload = json_encode([
@@ -381,7 +381,7 @@ $app->delete('/tipos_propiedad/{id}', function(Request $request, Response $respo
                 $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad a eliminar no existe']));
                 $code=404;
             }  
-            return $response->withStatus($code);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
             
 
         }catch(PDOException $e){
@@ -603,7 +603,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             $consulta->bindValue(":activo", $activo);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'El inquilino con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(200);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         }
             
     }catch(PDOException $e){
@@ -645,7 +645,7 @@ $app->delete('/inquilinos/{id}', function(Request $request, Response $response, 
                 $response->getBody()->write(json_encode(['error'=> 'El inquilino a eliminar no existe']));
                 $code=404;
             }  
-            return $response->withStatus($code);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -970,7 +970,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(200);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         }
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1011,7 +1011,7 @@ $app->delete('/propiedades/{id}', function(Request $request, Response $response,
             $response->getBody()->write(json_encode(['error'=> 'La propiedad con id: '.$id.' no existe']));
             $code=404;
         }  
-        return $response->withStatus($code);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1309,7 +1309,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $consulta->bindValue(":valor_total", $valor_total);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La reserva con el id: '. $id . ' se edito de forma exitosa']));
-            return $response->withStatus(200);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         }
     }catch(PDOException $e){
         $payload = json_encode([
@@ -1350,7 +1350,7 @@ $app->delete('/reservas/{id}', function(Request $request, Response $response, $a
             }else{ $response->getBody()->write(json_encode(['error'=> 'La reserva con id: '.$id.' no existe']));
                $code=404;
             }  
-            return $response->withStatus($code);
+            return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
 
         }catch(PDOException $e){
             $payload = json_encode([
@@ -1391,6 +1391,10 @@ $app->get('/reservas', function(Request $request, Response $response){
     }
 
 
+});
+
+$app->options('/{routes:.+}', function (Request $request, Response $response, $args) {
+    return $response;
 });
 
 $app->run();
