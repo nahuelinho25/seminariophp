@@ -75,7 +75,7 @@ $app->post('/localidades',function(Request $request, Response $response){
         $payload = json_encode([
             'status' => "error",
             'code' => 400,
-            'data' => $errores
+            'message' => $errores
         ]);
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
@@ -141,7 +141,7 @@ $app->put('/localidades/{id}', function(Request $request, Response $response, $a
             $payload = json_encode([
                 'status' => "error",
                 'code' => $codeerro,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus($codeerro); 
@@ -264,7 +264,7 @@ $app->post('/tipos_propiedad', function(Request $request, Response $response){
             $payload = json_encode([
                 'status' => "error",
                 'code' => 400,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
@@ -327,7 +327,7 @@ $app->put('/tipos_propiedad/{id}', function(Request $request, Response $response
             $payload = json_encode([
                 'status' => "error",
                 'code' => $codeerro,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus($codeerro); 
@@ -483,7 +483,7 @@ $app->post('/inquilinos', function(Request $request, Response $response){
             $payload = json_encode([
                 'status' => "error",
                 'code' => 400,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
@@ -583,7 +583,7 @@ $app->put('/inquilinos/{id}', function(Request $request, Response $response, $ar
             $payload = json_encode([
                 'status' => "error",
                 'code' => $codeerro,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus($codeerro); 
@@ -830,7 +830,7 @@ $app->post('/propiedades', function(Request $request, Response $response){
             $payload = json_encode([
                 'status' => "error",
                 'code' => 400,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
@@ -944,7 +944,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $payload = json_encode([
                 'status' => "error",
                 'code' => $codeerro,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus($codeerro); 
@@ -1156,7 +1156,7 @@ $app->post('/reservas', function(Request $request, Response $response){
             $payload = json_encode([
                 'status' => "error",
                 'code' => 400,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400); 
@@ -1283,7 +1283,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
             $payload = json_encode([
                 'status' => "error",
                 'code' => $codeerro,
-                'data' => $errores
+                'message' => $errores
             ]);
             $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus($codeerro); 
