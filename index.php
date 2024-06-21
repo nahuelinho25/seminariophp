@@ -421,6 +421,40 @@ $app->get('/tipos_propiedad', function(Request $request, Response $response){
     }
 });
 
+// Ver Tipo de Propiedad
+$app->get('/tipos_propiedad/{id}', function(Request $request, Response $response, $args){
+    $id = $args['id'];
+    try{
+        $connection = getConnection();
+        $sql = "SELECT * FROM tipo_propiedades WHERE id = '". $id ."' ";
+        $consulto_id = $connection->query($sql);
+        // Verificar si existe el campo
+        if ($consulto_id->rowCount()>0){
+            $tipo_propiedad_x = $consulto_id->fetch(PDO::FETCH_ASSOC);
+            $payload = json_encode([
+                'status' => "success",
+                    'code' => 200,
+                    'message' => $tipo_propiedad_x
+            ]);
+            $response->getBody()->write($payload);
+            $code=200;
+        }else{
+            $response->getBody()->write(json_encode(['error'=> 'El tipo de propiedad no existe']));
+            $code=404;
+        }
+        return $response->withHeader('Content-Type', 'application/json')->withStatus($code);
+
+    }catch (PDOException $e){
+        $payload = json_encode ([
+            'status' => "Bad Request",
+            'code' => 400,
+            'message' => "Error al mostrar los datos del tipo de propiedad". $e->getMessage()
+        ]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+});
+
 // ================================[ INQUILINOS ]=========================================
 
 /// Crear Inquilino 
