@@ -1065,7 +1065,11 @@ $app->get('/propiedades', function(Request $request, Response $response) {
     try {
         $connection = getConnection();
         $campofiltros =['localidad_id', 'cantidad_huespedes', 'fecha_inicio_disponibilidad', 'disponible']; //enviar fecha_inicio_disponibilidad con formato fecha
-        $sql= "SELECT * FROM propiedades WHERE 1=1";
+        $sql= "SELECT p.*, l.nombre AS localidad_id, tp.nombre AS tipo_propiedad_id 
+               FROM propiedades p
+               JOIN localidades l ON p.localidad_id = l.id
+               JOIN tipo_propiedades tp ON p.tipo_propiedad_id = tp.id
+               WHERE 1=1";
         // Compruebo filtros activos
         foreach($campofiltros as $campo){
             if(isset($data[$campo])){
@@ -1101,7 +1105,11 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
     $id = $args['id'];
     try {
         $connection = getConnection();
-        $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
+        $sql ="SELECT p.*, l.nombre AS localidad_id, tp.nombre AS tipo_propiedad_id 
+               FROM propiedades p
+               JOIN localidades l ON p.localidad_id = l.id
+               JOIN tipo_propiedades tp ON p.tipo_propiedad_id = tp.id
+               WHERE 1=1";
         $consulto_id = $connection->query($sql);
         /// Verificar si existe el campo
         if ($consulto_id->rowCount()> 0){
