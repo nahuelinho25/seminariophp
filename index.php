@@ -1026,7 +1026,7 @@ $app->get('/propiedades/{id}', function(Request $request, Response $response, $a
             $payload = json_encode([
                 'status' => "success",
                 'code' => 200,
-                'data' => $propiedadesx
+                'message' => $propiedadesx
             ]);
             $response->getBody()->write($payload);
             $code=200;
@@ -1324,7 +1324,7 @@ $app->get('/reservas/{id}', function(Request $request, Response $response, $args
             $payload = json_encode([
                 'status' => "success",
                 'code' => 200,
-                'data' => $reservasx
+                'message' => $reservasx
             ]);
             $response->getBody()->write($payload);
             $code=200;
