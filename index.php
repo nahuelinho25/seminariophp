@@ -1173,7 +1173,7 @@ $app->put('/reservas/{id}', function(Request $request, Response $response, $args
                 $errores['propiedad_existe'] = 'El ID '.$propiedad_id.' no existe en la tabla propiedades';
             } 
             /// Verificar si el inquilino ya tiene una reserva en la misma propiedad
-            $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."'";
+            $sql = "SELECT * FROM reservas WHERE inquilino_id = '". $inquilino_id ."' AND propiedad_id = '".$propiedad_id."' AND id != '". $id ."'" ;
             $consulta_reserva_existente = $connection->query($sql);
             if ($consulta_reserva_existente->rowCount() > 0){
                 $errores['inquilino_reserva'] = 'El inquilino ya tiene una reserva en esta propiedad';
