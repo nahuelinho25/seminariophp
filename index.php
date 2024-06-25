@@ -853,6 +853,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $errores[$campo] = 'El campo '. $campo . ' es requerido';
             }
         }
+
         // Verificar si la fecha tiene un formato correcto
         if (isset($data['fecha_inicio_disponibilidad'])) {
             $fecha_inicio_disponibilidad = $data['fecha_inicio_disponibilidad'];
@@ -864,11 +865,13 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
                 $errores['fecha_formato'] = 'La fecha tiene un formato incorrecto. El formato esperado es: ' . $formato_correcto;
             }
         }  
+
         /// Verificaciones campo 'domicilio, localidad_id,tipo_propiedad_id'
         if (isset($data['domicilio']) && isset($data['localidad_id']) && isset($data['tipo_propiedad_id'])) {
             $domicilio = $data['domicilio'];
             $localidad_id = $data['localidad_id']; 
             $tipo_propiedad_id = $data['tipo_propiedad_id'];
+
             // Verificar si el de domicilio de la propiedad ya esta en uso (Excluyendo el ID )
             $sql ="SELECT * FROM propiedades WHERE domicilio = '". $domicilio ."' AND id != '". $id ."'";
             $consulta_repetido = $connection->query($sql);
@@ -883,6 +886,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
                 $errores['localidad_existe'] = 'El ID '.$localidad_id.' no existe en la tabla localidades';
                 $codeerro['localidad_existe'] = 400;
             }
+
             /// Verificar si el ID de tipo_propiedades existe en la tabla tipo_propiedades
             $sql = "SELECT * FROM tipo_propiedades WHERE id = '".$tipo_propiedad_id."'";
             $consulta_tipo_propiedades = $connection->query($sql);
@@ -890,6 +894,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
                 $errores['tipo_propiedad_existe'] = 'El ID '.$tipo_propiedad_id.' no existe en la tabla tipo_propiedades';
             }
         }
+
         // Verificar si la propiedad existe
         $sql = "SELECT * FROM propiedades WHERE id = '". $id ."'";
         $consulto_id = $connection->query($sql);
@@ -897,6 +902,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $errores['propiedad_existe'] = 'La propiedad con el id: '. $id . ' no existe';
             $codeerro = 404;
         }
+
         /// Mostrar todos los errores
         if (!empty($errores)){
             $payload = json_encode([
@@ -913,19 +919,24 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
             $disponible = $data['disponible']; 
             $valor_noche = $data['valor_noche'];
             /// Editar Propiedad
-            $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id,
-                        cantidad_huespedes = :cantidad_huespedes, 
+            $sql = "UPDATE propiedades SET domicilio = :domicilio, localidad_id = :localidad_id, cantidad_habitaciones = :cantidad_habitaciones,
+                        cantidad_banios = :cantidad_banios, cantidad_huespedes = :cantidad_huespedes, cochera = :cochera,
                         fecha_inicio_disponibilidad = :fecha_inicio_disponibilidad, cantidad_dias = :cantidad_dias, disponible = :disponible, valor_noche = :valor_noche,
-                        tipo_propiedad_id = :tipo_propiedad_id WHERE id = '". $id ."'";
+                        tipo_propiedad_id = :tipo_propiedad_id, imagen = :imagen, tipo_imagen = :tipo_imagen WHERE id = '". $id ."'";
             $consulta = $connection->prepare($sql);
             $consulta->bindValue(":domicilio", $domicilio);
             $consulta->bindValue(":localidad_id", $localidad_id);
+            $consulta->bindValue(":cantidad_habitaciones", $data['cantidad_habitaciones']?? 0);
+            $consulta->bindValue(":cantidad_banios", $data['cantidad_banios']?? 0);
+            $consulta->bindValue(":cochera", $data['cochera']?? 0);
             $consulta->bindValue(":cantidad_huespedes", $cantidad_huespedes);
             $consulta->bindValue(":fecha_inicio_disponibilidad", $fecha_inicio_disponibilidad);
             $consulta->bindValue(":cantidad_dias", $cantidad_dias);
             $consulta->bindValue(":disponible", $disponible);
             $consulta->bindValue(":valor_noche", $valor_noche);
             $consulta->bindValue(":tipo_propiedad_id", $tipo_propiedad_id);
+            $consulta->bindValue(":imagen", $data['imagen']?? null);
+            $consulta->bindValue(":tipo_imagen", $data['tipo_imagen']?? null);
             $consulta->execute();
             $response->getBody()->write(json_encode(['message' => 'La propiedad con el id: '. $id . ' se edito de forma exitosa']));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
@@ -939,7 +950,7 @@ $app->put('/propiedades/{id}', function(Request $request, Response $response, $a
         $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
-}); 
+});
 /// Eliminar Propiedad
 $app->delete('/propiedades/{id}', function(Request $request, Response $response, $args){
     $id = $args['id'];
